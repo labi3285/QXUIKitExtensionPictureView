@@ -1,0 +1,6 @@
+framework module Pods_QXUIKitExtensionPictureView {
+  umbrella header "Pods-QXUIKitExtensionPictureView-umbrella.h"
+
+  export *
+  module * { export * }
+}

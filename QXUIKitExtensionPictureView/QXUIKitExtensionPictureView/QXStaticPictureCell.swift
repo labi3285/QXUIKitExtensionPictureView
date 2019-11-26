@@ -11,20 +11,20 @@ import QXConsMaker
 import QXUIKitExtension
 import DSImageBrowse
 
-open class QXStaticPictureCell: QXStaticBaseCell {
+open class QXStaticPictureCell: QXStaticCell {
     
     open override func height(_ model: Any?, _ width: CGFloat) -> CGFloat? {
-        pictureView.intrinsicWidth = width
-        return pictureView.intrinsicContentSize.height
+        pictureView.fixWidth = width
+        return pictureView.natureSize.h
     }
     
-    public lazy var pictureView: QXPictureView = {
-        let one = QXPictureView()
-        one.padding = QXEdgeInsets(5, 15, 5, 15)
-        one.imageView.respondUpdateImage = { [weak self] in
+    public final lazy var pictureView: QXPictureView = {
+        let e = QXPictureView()
+        e.padding = QXEdgeInsets(5, 15, 5, 15)
+        e.respondUpdateImage = { [weak self] in
             self?.tableView?.setNeedsUpdate()
         }
-        return one
+        return e
     }()
 
     required public init() {

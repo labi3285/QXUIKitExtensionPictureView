@@ -8,42 +8,47 @@
 
 import UIKit
 
-open class QXStaticBaseCell: QXTableViewCell {
+open class QXStaticCell: QXTableViewCell {
     
-    open override var model: Any? {
+    override open var model: Any? {
         didSet {
             // 因为model是cell本身，这里防止循环引用
             super.model = nil
         }
     }
     
+    open var isDisplay: Bool = true
+    open var isEnabled: Bool = true
+
     open func height(_ model: Any?, _ width: CGFloat) -> CGFloat? {
         return fixHeight
     }
     open var fixHeight: CGFloat?
     
-    open override class func height(_ model: Any?, _ width: CGFloat) -> CGFloat? {
-        if let e = model as? QXStaticBaseCell {
+    override open class func height(_ model: Any?, _ width: CGFloat) -> CGFloat? {
+        if let e = model as? QXStaticCell {
             return e.height(model, width)
         }
         return nil
     }
     
-    required public init() {
+    public required init() {
         super.init("static")
+        backButton.isDisplay = false
+        contentView.clipsToBounds = true
     }
-    required public init?(coder aDecoder: NSCoder) {
+    public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    required public init(_ reuseId: String) {
+    public required init(_ reuseId: String) {
         fatalError("init(_:) has not been implemented")
     }
     
 }
 
-open class QXStaticBaseHeaderFooterView: QXTableViewHeaderFooterView {
+open class QXStaticHeaderFooterView: QXTableViewHeaderFooterView {
     
-    open override var model: Any? {
+    override open var model: Any? {
         didSet {
             // 因为model是view本身，这里防止循环引用
             super.model = nil
@@ -55,20 +60,21 @@ open class QXStaticBaseHeaderFooterView: QXTableViewHeaderFooterView {
     }
     open var fixHeight: CGFloat?
     
-    open override class func height(_ model: Any?, _ width: CGFloat) -> CGFloat? {
-        if let e = model as? QXStaticBaseHeaderFooterView {
+    override open class func height(_ model: Any?, _ width: CGFloat) -> CGFloat? {
+        if let e = model as? QXStaticHeaderFooterView {
             return e.height(model, width)
         }
         return nil
     }
     
-    required public init() {
+    public required init() {
         super.init("static")
+        backButton.isDisplay = false
     }
-    required public init?(coder aDecoder: NSCoder) {
+    public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    required public init(_ reuseId: String) {
+    public required init(_ reuseId: String) {
         fatalError("init(_:) has not been implemented")
     }
     

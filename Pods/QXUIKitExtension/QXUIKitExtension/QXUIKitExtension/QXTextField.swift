@@ -15,6 +15,13 @@ open class QXTextField: QXView, UITextFieldDelegate {
     public var respondEndEditting: (() -> ())?
     public var respondReturn: (() -> ())?
     
+    open var isEnabled: Bool = true {
+        didSet {
+            uiTextField.isEnabled = isEnabled
+            uiTextField.alpha = isEnabled ? 1 : 0.3
+        }
+    }
+
     public var text: String {
         set {
             uiTextField.text = newValue
@@ -24,13 +31,12 @@ open class QXTextField: QXView, UITextFieldDelegate {
         }
     }
     
-    open var font: QXFont = QXFont(size: 16, color: QXColor.black) {
+    open var font: QXFont = QXFont(16, QXColor.dynamicInput) {
         didSet {
             uiTextField.font = font.uiFont
             uiTextField.textColor = font.color.uiColor
         }
     }
-    
     
     open var placeHolder: String = "" {
         didSet {
@@ -38,7 +44,7 @@ open class QXTextField: QXView, UITextFieldDelegate {
                    qxSetNeedsLayout()
         }
     }
-    open var placeHolderfont: QXFont = QXFont(size: 16, color: QXColor.placeHolderGray) {
+    open var placeHolderfont: QXFont = QXFont(16, QXColor.dynamicPlaceHolder) {
         didSet {
             uiTextField.attributedPlaceholder = placeHolderfont.nsAttributtedString(placeHolder)
             qxSetNeedsLayout()
@@ -66,52 +72,79 @@ open class QXTextField: QXView, UITextFieldDelegate {
         }
     }
         
-    public lazy var uiTextField: UITextField = {
-        let one = UITextField()
-        one.clearButtonMode = .whileEditing
-        one.qxTintColor = QXColor.hex("#666666", 1)
-        one.leftViewMode = .never
-        one.rightViewMode = .never
-        one.delegate = self
-        one.addTarget(self, action: #selector(textChange), for: .editingChanged)
-        return one
+    public var pickerView: QXPickerKeyboardView? {
+        didSet {
+            if let e = pickerView {
+                uiTextField.inputView = e
+                e.respondItem = { [weak self] item in
+                    self?.pickedItems = item?.items()
+                    self?.pickedItem = item
+                }
+            }
+        }
+    }
+    public private(set) var pickedItem: QXPickerView.Item?
+    public var pickedTextParser: ([String]?) -> String?
+        = { strs in strs?.joined(separator: "-") }
+    public private(set) var pickedItems: [QXPickerView.Item]? {
+        didSet {
+            text = pickedTextParser(pickedItems?.map{ $0.text }) ?? ""
+            pickedItem = pickedItems?.last
+        }
+    }
+    public var bringInPickedItems: [QXPickerView.Item]? {
+        didSet {
+            pickedItems = bringInPickedItems
+            pickerView?.bringInPickedItems = bringInPickedItems
+        }
+    }
+            
+    public final lazy var uiTextField: UITextField = {
+        let e = UITextField()
+        e.clearButtonMode = .never
+        e.qxTintColor = QXColor.dynamicAccent
+        e.leftViewMode = .never
+        e.rightViewMode = .never
+        e.delegate = self
+        e.addTarget(self, action: #selector(textChange), for: .editingChanged)
+        return e
     }()
-        
+    private var _originUITextFieldQXTintColor: QXColor?
+    public final lazy var coverView: UIView = {
+        let e = UIView()
+        e.backgroundColor = UIColor.clear
+        e.isHidden = true
+        return e
+    }()
     public override init() {
         super.init()
         addSubview(uiTextField)
+        addSubview(coverView)
     }
-    required public init?(coder aDecoder: NSCoder) {
+    public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    public var intrinsicWidth: CGFloat?
-    open override var intrinsicContentSize: CGSize {
-        if isDisplay {
-            var w: CGFloat = 0
-            var h: CGFloat = 0
-            if let e = intrinsicSize {
-                w = e.w
-                h = e.h
-            } else if let e = intrinsicWidth {
-                var size = CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-                size = uiTextField.sizeThatFits(size)
-                w = padding.left + e + padding.right
-                h = padding.top + size.height + padding.bottom
-            } else {
-                let size = uiTextField.intrinsicContentSize
-                w = padding.left + size.width + padding.right
-                h = padding.top + size.height + padding.bottom
-            }
-            return CGSize(width: w, height: h)
+    open override func natureContentSize() -> QXSize {
+        var w: CGFloat = 0
+        var h: CGFloat = 0
+        if let e = fixWidth {
+            var size = CGSize(width: QXView.extendLength, height: QXView.extendLength)
+            size = uiTextField.sizeThatFits(size)
+            w = padding.left + e + padding.right
+            h = padding.top + size.height + padding.bottom
         } else {
-            return CGSize.zero
+            let size = uiTextField.intrinsicContentSize
+            w = padding.left + size.width + padding.right
+            h = padding.top + size.height + padding.bottom
         }
+        return QXSize(w, h)
     }
-    
-    open override func layoutSubviews() {
+
+    override open func layoutSubviews() {
         super.layoutSubviews()
         uiTextField.qxRect = qxBounds.rectByReduce(padding)
+        coverView.qxRect = uiTextField.qxRect
     }
     
     public var hasSelectRange: Bool {
@@ -130,9 +163,14 @@ open class QXTextField: QXView, UITextFieldDelegate {
     
     public func textFieldDidBeginEditing(_ textField: UITextField) {
         respondBeginEditting?()
+        coverView.isHidden = pickerView == nil
+        if QXEmpty(textField.text) {
+            pickerView?.checkOrPerformSelectAtInit()
+        }
     }
     public func textFieldDidEndEditing(_ textField: UITextField) {
         respondEndEditting?()
+        coverView.isHidden = true
     }
     
     @objc func textChange() {
@@ -152,3 +190,4 @@ open class QXTextField: QXView, UITextFieldDelegate {
         }())        
     }
 }
+

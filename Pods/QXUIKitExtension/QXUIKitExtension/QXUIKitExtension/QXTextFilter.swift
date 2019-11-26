@@ -27,6 +27,9 @@ public enum QXTextFilter {
     case money(min: Double, max: Double)
     
     public func filte(_ text: String) -> String {
+        if text == "" {
+            return text
+        }
         func doRegex(_ text: String, regex: String?) -> String {
             if let regex = regex {
                 return _filte(text, regex: regex)
@@ -36,7 +39,7 @@ public enum QXTextFilter {
         func doLimit(_ text: String, limit: Int?) -> String {
             if let limit = limit {
                 if text.count >= limit {
-                    return text.qxSubString(start: 0, end: limit)
+                    return text.qxSubString(start: 0, end: limit - 1)
                 }
             }
             return text
@@ -129,3 +132,4 @@ public enum QXTextFilter {
     }
     
 }
+

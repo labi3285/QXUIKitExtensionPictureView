@@ -31,7 +31,7 @@ open class QXContentLoadStatusView<T>: QXView {
     
     open func reloadData() {
         weak var ws = self
-        api?({ model in
+        api?.api({ model in
            if model == nil {
                 ws?.loadStatus = .empty(ws?.emptyMessage)
            } else {
@@ -80,21 +80,14 @@ open class QXContentLoadStatusView<T>: QXView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    open override func layoutSubviews() {
+    override open func layoutSubviews() {
         super.layoutSubviews()
         contentView.qxRect = qxBounds.rectByReduce(padding)
         loadStatusView.qxRect = qxBounds.rectByReduce(padding)
     }
     
-    open override var intrinsicContentSize: CGSize {
-        if isDisplay {
-            if let e = intrinsicSize {
-                return e.cgSize
-            }
-            let e = loadStatusView.intrinsicContentSize
-            return e.qxSizeByAdd(padding.uiEdgeInsets)
-        }
-        return CGSize.zero
+    open override func natureContentSize() -> QXSize {
+        return loadStatusView.intrinsicContentSize.qxSize.sizeByAdd(padding)
     }
     
 }
@@ -117,8 +110,8 @@ open class QXLoadStatusView: UIView {
     
     // loadingIcon 为nil的时候展示
     open var loadingView: QXActivityIndicatorView = {
-        let e = QXActivityIndicatorView(systemView: UIActivityIndicatorView(style: .gray))
-        e.margin = QXEdgeInsets(5, 5, 5, 5)
+        let e = QXActivityIndicatorView()
+        e.padding = QXEdgeInsets(5, 5, 5, 5)
         return e
         }() {
         didSet {
@@ -131,9 +124,9 @@ open class QXLoadStatusView: UIView {
         }
     }
     
-    open var loadingTextFont: QXFont = QXFont(13, "#848484")
-    open var emptyTextFont: QXFont = QXFont(13, "#848484")
-    open var errorTextFont: QXFont = QXFont(13, "#848484")
+    open var loadingTextFont: QXFont = QXFont(13, QXColor.dynamicPlaceHolder)
+    open var emptyTextFont: QXFont = QXFont(13, QXColor.dynamicPlaceHolder)
+    open var errorTextFont: QXFont = QXFont(13, QXColor.dynamicPlaceHolder)
     
     open var defaultLoadingText: String? = "加载中"
     open var defaultEmptyText: String? = "暂无内容"
@@ -145,45 +138,46 @@ open class QXLoadStatusView: UIView {
     open var isRetryButtonShow: Bool = true
     open var isFullScreenRetry: Bool = false
     
-    open lazy var iconView: QXImageView = {
-        let one = QXImageView()
-        one.padding = QXEdgeInsets.zero
-        one.qxTintColor = QXColor.fmtHex("#848484")
-        one.respondNeedsLayout = { [weak self] in
+    public final lazy var iconView: QXImageView = {
+        let e = QXImageView()
+        e.padding = QXEdgeInsets.zero
+        e.qxTintColor = QXColor.dynamicPlaceHolder
+        e.respondNeedsLayout = { [weak self] in
             self?.layoutSubviews()
         }
-        return one
+        return e
     }()
-    open lazy var contentLabel: QXLabel = {
-        let one = QXLabel()
-        one.padding = QXEdgeInsets(10, 20, 10, 20)
-        one.numberOfLines = 0
-        one.alignmentX = .center
-        one.alignmentY = .center
-        one.respondNeedsLayout = { [weak self] in
+    public final lazy var contentLabel: QXLabel = {
+        let e = QXLabel()
+        e.padding = QXEdgeInsets(10, 20, 10, 20)
+        e.numberOfLines = 0
+        e.alignmentX = .center
+        e.alignmentY = .center
+        e.respondNeedsLayout = { [weak self] in
             self?.setNeedsLayout()
         }
-        return one
+        return e
     }()
-    public lazy var retryButton: QXTitleButton = {
-        let one = QXTitleButton()
-        one.backView.qxBorder = QXBorder.border
-        one.font = QXFont(14, "#848484")
-        one.title = "点击重试"
-        one.padding = QXEdgeInsets(7, 10, 7, 10)
-        one.titlePadding = QXEdgeInsets(7, 10, 7, 10)
-        one.respondNeedsLayout = { [weak self] in
+    public final lazy var retryButton: QXTitleButton = {
+        let e = QXTitleButton()
+        e.backView.qxBorder = QXBorder().setCornerRadius(5)
+        e.backView.qxBackgroundColor = QXColor.dynamicButton
+        e.font = QXFont(14, QXColor.dynamicButtonText)
+        e.title = "点击重试"
+        e.padding = QXEdgeInsets(7, 10, 7, 10)
+        e.titlePadding = QXEdgeInsets(7, 10, 7, 10)
+        e.respondNeedsLayout = { [weak self] in
             self?.setNeedsLayout()
         }
-        return one
+        return e
     }()
-    public lazy var stackView: QXStackView = {
-        let one = QXStackView()
-        one.setupViews([self.loadingView, self.iconView, self.contentLabel, self.retryButton])
-        one.isVertical = true
-        one.alignmentX = .center
-        one.alignmentY = .center
-        return one
+    public final lazy var stackView: QXStackView = {
+        let e = QXStackView()
+        e.setupViews([self.loadingView, self.iconView, self.contentLabel, self.retryButton])
+        e.isVertical = true
+        e.alignmentX = .center
+        e.alignmentY = .center
+        return e
     }()
 
     public override init(frame: CGRect) {
@@ -191,13 +185,13 @@ open class QXLoadStatusView: UIView {
         addSubview(stackView)
         self.isHidden = true
     }
-    required public init?(coder aDecoder: NSCoder) {
+    public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    open override func layoutSubviews() {
+    override open func layoutSubviews() {
         super.layoutSubviews()
         let rect = qxRect.absoluteRect
-        contentLabel.intrinsicWidth = rect.w
+        contentLabel.fixWidth = rect.w
         let size = stackView.qxIntrinsicContentSize
         let top = (rect.h - size.h) * topBottomRatio / (topBottomRatio + 1)
         stackView.qxRect = rect.insideRect(.top(top), .center, .size(size))

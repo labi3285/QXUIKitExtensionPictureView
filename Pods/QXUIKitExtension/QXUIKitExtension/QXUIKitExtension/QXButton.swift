@@ -25,20 +25,20 @@ open class QXButton: QXView {
     /// 触发点击的容忍距离
     open var clickMoveTolerance: CGFloat = 20
     /// 点击的高光效果持续时间，默认0.3秒, nil 表示不会延时
-    open var clickHighlightDelaySecs: Double? = 0.3
+    open var clickHighlightDelaySecs: TimeInterval? = 0.1
     
     /// 高亮的alpha，nil表示不生效
-    open var highlightAlpha: CGFloat?
+    open var highlightAlpha: CGFloat? = 0.3
     /// 无效的alpha，nil表示不生效
     open var disableAlpha: CGFloat? = 0.3
     
     /// 是否高亮
     public private(set) var isHighlighted: Bool = false
     
-    public lazy var backView: BackView = {
-        let one = BackView()
-        one.isUserInteractionEnabled = false
-        return one
+    public final lazy var backView: BackView = {
+        let e = BackView()
+        e.isUserInteractionEnabled = false
+        return e
     }()
     
     open class BackView: UIView {
@@ -60,26 +60,18 @@ open class QXButton: QXView {
         super.init()
         addSubview(backView)
     }
-    required public init?(coder aDecoder: NSCoder) {
+    public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    open override func layoutSubviews() {
+    override open func layoutSubviews() {
         super.layoutSubviews()
         backView.qxRect = qxRect.absoluteRect.rectByReduce(padding)
     }
     
-    open override var intrinsicContentSize: CGSize {
-        if isDisplay {
-            if let e = intrinsicSize {
-                return e.cgSize
-            } else {
-                return CGSize.zero
-            }
-        } else {
-            return CGSize.zero
-        }
+    open override func natureContentSize() -> QXSize {
+        return QXSize(44, 44)
     }
-    
+
     open func update() {
         if isEnabled {
             isUserInteractionEnabled = true
@@ -104,6 +96,12 @@ open class QXButton: QXView {
         _originShadow = backView.qxShadow
         _originBorder = backView.qxBorder
         _originAlpha = alpha
+        if backView.backgroundColorHighlighted != nil {
+            highlightAlpha = nil
+        }
+        if backView.backgroundColorDisabled != nil {
+            disableAlpha = nil
+        }
     }
     open func handleNormalize() {
         if !_isOriginPrepared {
@@ -121,18 +119,10 @@ open class QXButton: QXView {
             handlePrepareOrigins()
             _isOriginPrepared = true
         }
-        if let e = backView.backgroundColorHighlighted {
-            backView.qxBackgroundColor = e
-        }
-        if let e = backView.shadowHighlighted {
-            backView.qxShadow = e
-        }
-        if let e = backView.borderHighlighted {
-            backView.qxBorder = e
-        }
-        if let e = highlightAlpha {
-            backView.alpha = e
-        }
+        backView.qxBackgroundColor = backView.backgroundColorHighlighted ?? _originBackgoundColor
+        backView.qxShadow = backView.shadowHighlighted ?? _originShadow
+        backView.qxBorder = backView.borderHighlighted ?? _originBorder
+        backView.alpha = highlightAlpha ?? _originAlpha ?? 1
         qxSetNeedsLayout()
     }
     open func handleSelected() {
@@ -140,15 +130,10 @@ open class QXButton: QXView {
             handlePrepareOrigins()
             _isOriginPrepared = true
         }
-        if let e = backView.backgroundColorSelected {
-            backView.qxBackgroundColor = e
-        }
-        if let e = backView.shadowSelected {
-            backView.qxShadow = e
-        }
-        if let e = backView.borderSelected {
-            backView.qxBorder = e
-        }
+        backView.qxBackgroundColor = backView.backgroundColorSelected ?? _originBackgoundColor
+        backView.qxShadow = backView.shadowSelected ?? _originShadow
+        backView.qxBorder = backView.borderSelected ?? _originBorder
+        backView.alpha = _originAlpha ?? 1
         qxSetNeedsLayout()
     }
     open func handleDisabled(isSelected: Bool) {
@@ -156,31 +141,23 @@ open class QXButton: QXView {
             handlePrepareOrigins()
             _isOriginPrepared = true
         }
-        if let e = backView.backgroundColorDisabled {
-            backView.qxBackgroundColor = e
-        }
-        if let e = backView.shadowDisabled {
-            backView.qxShadow = e
-        }
-        if let e = backView.borderDisabled {
-            backView.qxBorder = e
-        }
-        if let e = disableAlpha {
-            backView.alpha = e
-        }
+        backView.qxBackgroundColor = backView.backgroundColorDisabled ?? _originBackgoundColor
+        backView.qxShadow = backView.shadowDisabled ?? _originShadow
+        backView.qxBorder = backView.borderDisabled ?? _originBorder
+        backView.alpha = disableAlpha ?? _originAlpha ?? 1
         qxSetNeedsLayout()
     }
     
-    open override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+    override open func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         respondTouchDown?()
         isHighlighted = true
         update()
         _touchBeganPoint = touches.first?.location(in: self)
     }
-    open override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+    override open func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         respondTouchMoved?()
     }
-    open override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    override open func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         respondTouchEnded?()
         if let t = touches.first, let p = _touchBeganPoint {
             let p1 = t.location(in: self)
@@ -212,7 +189,7 @@ open class QXButton: QXView {
             }
         }
     }
-    open override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+    override open func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         respondTouchCancelled?()
         handleNormalize()
     }
@@ -228,7 +205,8 @@ open class QXButton: QXView {
 open class QXTitleButton: QXButton {
     
     open var title: String = "" { didSet { update() } }
-    open var font: QXFont = QXFont(fmt: "14 #333333")
+    open var font: QXFont = QXFont(14, QXColor.dynamicTitle) { didSet { update() } }
+    
     open var richTitles: [QXRichText]? { didSet { update() } }
     open var richTitle: QXRichText? {
         set {
@@ -293,77 +271,89 @@ open class QXTitleButton: QXButton {
     
     open var titlePadding: QXEdgeInsets = QXEdgeInsets.zero
 
-    public lazy var label: UILabel = {
-        let one = UILabel()
-        one.textAlignment = .center
-        one.isUserInteractionEnabled = false
-        return one
+    public final lazy var uiLabel: UILabel = {
+        let e = UILabel()
+        e.textAlignment = .center
+        e.isUserInteractionEnabled = false
+        return e
     }()
     
     public override init() {
         super.init()
-        backView.addSubview(label)
+        backView.addSubview(uiLabel)
     }
-    required public init?(coder aDecoder: NSCoder) {
+    public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
     override open func layoutSubviews() {
         super.layoutSubviews()
-        label.qxRect = backView.qxRect.absoluteRect.rectByReduce(padding)
+        uiLabel.qxRect = backView.qxRect.absoluteRect.rectByReduce(titlePadding)
     }
     
-    public var intrinsicMinHeight: CGFloat?
-    public var intrinsicWidth: CGFloat?
-    open override var intrinsicContentSize: CGSize {
-        if isDisplay {
-            if let e = intrinsicSize {
-                return e.cgSize
-            } else {
-                var size = label.qxIntrinsicContentSize
-                size = size.sizeByAdd(titlePadding).sizeByAdd(padding)
-                if let e = intrinsicMinHeight {
-                   size = QXSize(size.w, max(size.h, e))
-                }
-                if let e = intrinsicWidth {
-                    size = QXSize(max(size.w, e), size.h)
-                }
-                return size.cgSize
-            }
-        } else {
-            return CGSize.zero
+    open override func natureContentSize() -> QXSize {
+        var size = uiLabel.qxIntrinsicContentSize
+        size = size.sizeByAdd(titlePadding).sizeByAdd(padding)
+        return size
+    }
+    
+    override open func handlePrepareOrigins() {
+        super.handlePrepareOrigins()
+        if titleHighlighted != nil {
+            highlightAlpha = nil
+        }
+        if titleDisabled != nil {
+            disableAlpha = nil
         }
     }
     
     override open func handleNormalize() {
         if let e = richTitles {
-            label.qxRichTexts = e
+            uiLabel.qxRichTexts = e
         } else {
-            label.qxRichText = QXRichText.text(title, font)
+            uiLabel.qxRichText = QXRichText.text(title, font)
         }
         super.handleNormalize()
     }
     override open func handleHighlighted() {
         if let e = richTitlesHighlighted {
-            label.qxRichTexts = e
+            uiLabel.qxRichTexts = e
         } else if let e = titleHighlighted {
-            label.qxRichText = QXRichText.text(e, font)
+            uiLabel.qxRichText = QXRichText.text(e, font)
+        } else {
+           if let e = richTitles {
+              uiLabel.qxRichTexts = e
+           } else {
+              uiLabel.qxRichText = QXRichText.text(title, font)
+           }
         }
         super.handleHighlighted()
     }
     override open func handleSelected() {
         if let e = richTitlesSelected {
-            label.qxRichTexts = e
+            uiLabel.qxRichTexts = e
         } else if let e = titleSelected {
-            label.qxRichText = QXRichText.text(e, font)
+            uiLabel.qxRichText = QXRichText.text(e, font)
+        } else {
+            if let e = richTitles {
+               uiLabel.qxRichTexts = e
+            } else {
+               uiLabel.qxRichText = QXRichText.text(title, font)
+            }
         }
         super.handleSelected()
     }
     override open func handleDisabled(isSelected: Bool) {
         if let e = richTitlesDisabled {
-            label.qxRichTexts = e
+            uiLabel.qxRichTexts = e
         } else if let e = titleDisabled {
-            label.qxRichText = QXRichText.text(e, font)
+            uiLabel.qxRichText = QXRichText.text(e, font)
+        } else {
+            if let e = richTitles {
+                uiLabel.qxRichTexts = e
+            } else {
+                uiLabel.qxRichText = QXRichText.text(title, font)
+            }
         }
         super.handleDisabled(isSelected: isSelected)
     }
@@ -378,16 +368,16 @@ open class QXImageButton: QXButton {
     open var imageSelected: QXImage?
     open var imageDisabled: QXImage?
         
-    public lazy var imageView: QXImageView = {
-        let one = QXImageView()
-        return one
+    public final lazy var imageView: QXImageView = {
+        let e = QXImageView()
+        return e
     }()
     
     public override init() {
         super.init()
         backView.addSubview(imageView)
     }
-    required public init?(coder aDecoder: NSCoder) {
+    public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
@@ -396,71 +386,67 @@ open class QXImageButton: QXButton {
         imageView.qxRect = backView.qxRect.absoluteRect
     }
     
-    public var intrinsicWidth: CGFloat? = nil
-    public var intrinsicHeight: CGFloat? = nil
-    open override var intrinsicContentSize: CGSize {
-        if isDisplay {
-            if let e = intrinsicSize {
-                return e.cgSize
-            } else if let e = intrinsicWidth {
-                let size = imageView.qxIntrinsicContentSize
-                if size.isZero {
-                    return size.cgSize
-                } else {
-                    if size.w <= e - padding.left - padding.right {
-                        return size.sizeByAdd(padding).cgSize
-                    } else {
-                        let w = e - padding.left - padding.right
-                        let h = w * size.h / size.w
-                        return QXSize(w, h).sizeByAdd(padding).cgSize
-                    }
-                }
-            } else if let e = intrinsicHeight {
-                let size = imageView.qxIntrinsicContentSize
-                if size.isZero {
-                   return size.cgSize
-                } else {
-                   if size.h <= e - padding.top - padding.bottom {
-                       return size.sizeByAdd(padding).cgSize
-                   } else {
-                       let h = e - padding.top - padding.bottom
-                       let w = h * size.w / size.h
-                       return QXSize(w, h).sizeByAdd(padding).cgSize
-                   }
-                }
+    open override func natureContentSize() -> QXSize {
+        if let e = fixWidth ?? maxWidth {
+            let size = imageView.qxIntrinsicContentSize
+            if size.isZero {
+                return size
             } else {
-                let size = imageView.qxIntrinsicContentSize
-                if size.isZero {
-                    return size.cgSize
+                if size.w <= e - padding.left - padding.right {
+                    return size.sizeByAdd(padding)
                 } else {
-                    return size.sizeByAdd(padding).cgSize
+                    let w = e - padding.left - padding.right
+                    let h = w * size.h / size.w
+                    return QXSize(w, h).sizeByAdd(padding)
+                }
+            }
+        } else if let e = fixHeight ?? maxHeight {
+            let size = imageView.qxIntrinsicContentSize
+            if size.isZero {
+                return size
+            } else {
+                if size.h <= e - padding.top - padding.bottom {
+                    return size.sizeByAdd(padding)
+                } else {
+                    let h = e - padding.top - padding.bottom
+                    let w = h * size.w / size.h
+                    return QXSize(w, h).sizeByAdd(padding)
                 }
             }
         } else {
-            return CGSize.zero
+            let size = imageView.qxIntrinsicContentSize
+            if size.isZero {
+                return size
+            } else {
+                return size.sizeByAdd(padding)
+            }
+        }
+    }
+
+    override open func handlePrepareOrigins() {
+        super.handlePrepareOrigins()
+        if imageHighlighted != nil {
+            highlightAlpha = nil
+        }
+        if imageDisabled != nil {
+            disableAlpha = nil
         }
     }
     
     override open func handleNormalize() {
-        imageView.image = image ?? imageView.image
+        imageView.image = image
         super.handleNormalize()
     }
     override open func handleHighlighted() {
-        if let e = imageHighlighted {
-            imageView.image = e
-        }
+        imageView.image = imageHighlighted ?? image
         super.handleHighlighted()
     }
     override open func handleSelected() {
-        if let e = imageHighlighted {
-            imageView.image = e
-        }
+        imageView.image = imageSelected ?? image
         super.handleSelected()
     }
     override open func handleDisabled(isSelected: Bool) {
-        if let e = imageDisabled {
-            imageView.image = e
-        }
+        imageView.image = imageSelected ?? image
         super.handleDisabled(isSelected: isSelected)
     }
     
@@ -477,18 +463,18 @@ open class QXStackButton: QXButton {
     
     open var stackPadding: QXEdgeInsets = QXEdgeInsets.zero
     
-    public lazy var stackView: QXStackView = {
-        let one = QXStackView()
-        one.alignmentX = .center
-        one.alignmentY = .center
-        return one
+    public final lazy var stackView: QXStackView = {
+        let e = QXStackView()
+        e.alignmentX = .center
+        e.alignmentY = .center
+        return e
     }()
     
     public override init() {
         super.init()
         backView.addSubview(stackView)
     }
-    required public init?(coder aDecoder: NSCoder) {
+    public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
@@ -497,29 +483,22 @@ open class QXStackButton: QXButton {
         stackView.qxRect = backView.qxRect.absoluteRect.rectByReduce(stackPadding)
     }
     
-    public var intrinsicMinWidth: CGFloat?
-    public var intrinsicMinHeight: CGFloat?
-    open override var intrinsicContentSize: CGSize {
-        if isDisplay {
-            if let e = intrinsicSize {
-                return e.cgSize
-            } else {
-                let size = stackView.qxIntrinsicContentSize
-                if size.isZero {
-                    return size.cgSize
-                } else {
-                    var size = size.sizeByAdd(stackPadding).sizeByAdd(padding)
-                    if let e = intrinsicMinWidth {
-                        size = QXSize(max(size.w, e), size.h)
-                    }
-                    if let e = intrinsicMinHeight {
-                        size = QXSize(size.w, max(size.h, e))
-                    }
-                    return size.cgSize
-                }
-            }
+    open override func natureContentSize() -> QXSize {
+        let size = stackView.qxIntrinsicContentSize
+        if size.isZero {
+            return size
         } else {
-            return CGSize.zero
+            return size.sizeByAdd(stackPadding).sizeByAdd(padding)
+        }
+    }
+    
+    override open func handlePrepareOrigins() {
+        super.handlePrepareOrigins()
+        if viewsHighlighted != nil {
+            highlightAlpha = nil
+        }
+        if viewsDisabled != nil {
+            disableAlpha = nil
         }
     }
     

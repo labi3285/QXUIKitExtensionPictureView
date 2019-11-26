@@ -137,12 +137,15 @@ open class QXFont {
         self.bold = false
     }
     
-    public init(size: CGFloat, color: QXColor) {
+    public convenience init(_ size: CGFloat, _ color: QXColor) {
+        self.init(size, color, bold: false)
+    }
+    public init(_ size: CGFloat, _ color: QXColor, bold: Bool) {
         self.size = size
         self.color = color
-        self.bold = false
+        self.bold = bold
     }
-    
+
     public init(_ size: CGFloat, _ fmtHex: String, _ bold: Bool) {
         self.size = size
         self.color = QXColor.fmtHex(fmtHex)
@@ -297,4 +300,5 @@ extension UIButton {
     private static var kUIButtonQXFontAssociateKey: String = "kUIButtonQXFontAssociateKey"
     
 }
+
 

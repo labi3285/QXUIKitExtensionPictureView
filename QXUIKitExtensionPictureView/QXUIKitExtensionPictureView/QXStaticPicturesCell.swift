@@ -11,32 +11,32 @@ import QXConsMaker
 import QXUIKitExtension
 import DSImageBrowse
 
-open class QXStaticPicturesCell: QXStaticBaseCell {
+open class QXStaticPicturesCell: QXStaticCell {
     
     open override func height(_ model: Any?, _ width: CGFloat) -> CGFloat? {
         if picturesView.pictures.count == 1 {
             for e in picturesView.pictureViews {
-                e.intrinsicWidth = width - picturesView.padding.left - picturesView.padding.right
+                e.fixWidth = width - picturesView.padding.left - picturesView.padding.right
             }
         } else if picturesView.pictures.count == 2 {
             let w = (width - picturesView.padding.left - picturesView.padding.right - picturesView.viewMarginX * 1) / 2
             for e in picturesView.pictureViews {
-                e.intrinsicSize = QXSize(w, w)
+                e.fixSize = QXSize(w, w)
             }
         } else {
             let w = (width - picturesView.padding.left - picturesView.padding.right - picturesView.viewMarginX * 2) / 3
             for e in picturesView.pictureViews {
-                e.intrinsicSize = QXSize(w, w)
+                e.fixSize = QXSize(w, w)
             }
         }
-        picturesView.intrinsicWidth = width
-        return picturesView.intrinsicContentSize.height
+        picturesView.fixWidth = width
+        return picturesView.natureSize.h
     }
         
     public lazy var picturesView: QXPicturesView = {
-        let one = QXPicturesView(9)
-        one.padding = QXEdgeInsets(5, 15, 5, 15)
-        return one
+        let e = QXPicturesView(9)
+        e.padding = QXEdgeInsets(5, 15, 5, 15)
+        return e
     }()
     
     required public init() {

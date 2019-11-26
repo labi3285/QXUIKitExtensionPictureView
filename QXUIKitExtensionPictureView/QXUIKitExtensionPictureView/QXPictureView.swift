@@ -10,7 +10,7 @@ import UIKit
 import QXUIKitExtension
 import DSImageBrowse
 
-open class QXPictureView: QXImageButton {
+open class QXPictureView: QXImageView {
         
     public var index: Int = 0
     
@@ -19,14 +19,13 @@ open class QXPictureView: QXImageButton {
         get { return image }
     }
     
-    
     open func handlePreview() {
         guard let url = image?.url?.nsUrl else {
             return
         }
         let item = DSImageScrollItem()
         item.largeImageURL = url
-        let thumbView = imageView.uiImageView
+        let thumbView = uiImageView
         item.largeImageSize = thumbView.size
         item.thumbView = thumbView
         item.isVisibleThumbView = true
@@ -42,12 +41,15 @@ open class QXPictureView: QXImageButton {
     }
     public override init() {
         super.init()
-        respondClick = { [weak self] in
-            self?.handlePreview()
-        }
+        isUserInteractionEnabled = true
+        let tap = UITapGestureRecognizer(target: self, action: #selector(tapGesture(_:)))
+        addGestureRecognizer(tap)
     }
     required public init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    @objc func tapGesture(_ recognizer: UITapGestureRecognizer) {
+        handlePreview()
     }
     
 }
@@ -73,17 +75,22 @@ open class QXPicturesView: QXArrangeView {
         }
     }
 
-    public lazy var pictureViews: [QXImageButton] = {
-        return (0..<self.maxCount).map { (i) -> QXImageButton in
-            let e = QXImageButton()
-            e.imageView.isForceImageFill = true
+    public final lazy var pictureViews: [QXImageView] = {
+        return (0..<self.maxCount).map { (i) -> QXImageView in
+            let e = QXImageView()
+            e.isForceImageFill = true
             e.isDisplay = false
-            e.respondClick = { [weak self] in
-                self?.handlePreview(i)
-            }
+            e.isUserInteractionEnabled = true
+            e.tag = i
+            let tap = UITapGestureRecognizer(target: self, action: #selector(tapGesture(_:)))
+            e.isUserInteractionEnabled = true
+            e.addGestureRecognizer(tap)
             return e
         }
     }()
+    @objc func tapGesture(_ recognizer: UITapGestureRecognizer) {
+        handlePreview(recognizer.view?.tag ?? 0)
+    }
     
     open func handlePreview(_ currentIndex: Int) {
         if pictureViews[currentIndex].image?.url?.nsUrl == nil {
@@ -96,7 +103,7 @@ open class QXPicturesView: QXArrangeView {
                 if let url = view.image?.url?.nsUrl {
                     let item = DSImageScrollItem()
                     item.largeImageURL = url
-                    let thumbView = view.imageView.uiImageView
+                    let thumbView = view.uiImageView
                     item.largeImageSize = thumbView.size
                     item.thumbView = thumbView
                     item.isVisibleThumbView = true
@@ -112,7 +119,7 @@ open class QXPicturesView: QXArrangeView {
         if container == nil {
             container = qxVc?.view
         }
-        let thumbView = pictureViews[currentIndex].imageView.uiImageView
+        let thumbView = pictureViews[currentIndex].uiImageView
         if container != nil {
             view?.presentfromImageView(thumbView, toContainer: container, index: newIndex, animated: true, completion: {
             })

@@ -10,14 +10,11 @@ import UIKit
 import Alamofire
 import QXJSON
 
-public typealias QXNetworkModelOk<T> = (_ model: T?) -> ()
-public typealias QXNetworkModelsOk<T> = (_ models: [T], _ isThereMore: Bool?) -> ()
-public typealias QXNetworkError = (_ err: QXError?) -> ()
-
-public typealias QXModelsApi<T> = (_ onOk: @escaping QXNetworkModelsOk<T>, _ onError: @escaping QXNetworkError) -> ()
-public typealias QXModelApi<T> = (_ onOk: @escaping QXNetworkModelOk<T>, _ onError: @escaping QXNetworkError) -> ()
-
-
+//public protocol QXApiProtocol {
+//
+//    var api:
+//
+//}
 
 extension QXRequest {
     
@@ -281,37 +278,37 @@ extension QXRequest {
     }
     
     fileprivate func _makeHeaders() -> [String: String]? {
-        var one = [String: String]()
+        var e = [String: String]()
         if let headers = appendHeaders {
             for (key, value) in headers {
-                one[key] = value
+                e[key] = value
             }
         }
         if let headers = headers {
             for (key, value) in headers {
-                one[key] = value
+                e[key] = value
             }
         }
-        if one.count > 0 {
-            return one
+        if e.count > 0 {
+            return e
         }
         return nil
     }
     
     fileprivate func _makeParams() -> [String: Any]? {
-        var one = [String: Any]()
+        var e = [String: Any]()
         if let params = appendParams {
             for (key, value) in params {
-                one[key] = value
+                e[key] = value
             }
         }
         if let params = params {
             for (key, value) in params {
-                one[key] = value
+                e[key] = value
             }
         }
-        if one.count > 0 {
-            return one
+        if e.count > 0 {
+            return e
         }
         return nil
     }

@@ -87,10 +87,10 @@ extension QXDate {
         
         /// static formatter for use
         private static var _formatter: DateFormatter = {
-            let one = DateFormatter()
-            one.calendar = Calendar(identifier: .gregorian)
-            one.dateFormat = DateFormats.standard24.rawValue
-            return one
+            let e = DateFormatter()
+            e.calendar = Calendar(identifier: .gregorian)
+            e.dateFormat = DateFormats.standard24.rawValue
+            return e
         }()
         
         /// make nature date string
@@ -210,12 +210,6 @@ public struct QXDate: CustomStringConvertible {
     public let minute: Int
     public let second: Int
     
-    /// judge exist of year, month and day segs, true if any of them is zero
-    public var isTimeMode: Bool {
-        let dateExist = year != 0 && month != 0 && day != 0
-        return !dateExist
-    }
-    
     public func string(_ fmt: DateFormats, _ placeholder: String = "--") -> String {
         return fmt.string(nsDate, placeholder)
     }
@@ -228,6 +222,19 @@ public struct QXDate: CustomStringConvertible {
         return DateFormats.segments.date(segmentFormateString)!
     }
     
+    public static let calendar: Calendar = Calendar(identifier: Calendar.Identifier.chinese)
+    
+    /// day index in a week, 1 - 7
+    public var weekDay: Int {
+        var i = QXDate.calendar.component(.weekday, from: nsDate)
+        if i == 1 {
+            i = 7
+        } else {
+            i -= 1
+        }
+        return i
+    }
+    
     /// date formate string
     public var segmentFormateString: String {
         return "\(year) \(month) \(day) \(hour) \(minute) \(second)"
@@ -238,14 +245,44 @@ public struct QXDate: CustomStringConvertible {
         return "[QXDate] " + DateFormats.segments.string(nsDate)
     }
     
-    /// init with year, month and day
     public init(year: Int, month: Int, day: Int) {
         self.init(year: year, month: month, day: day, hour: 0, minute: 0, second: 0)
     }
-    /// init with hour, minute and second
-    public init(hour: Int, minute: Int, second: Int) {
-        self.init(year: 0, month: 0, day: 0, hour: 0, minute: 0, second: 0)
+    public init(year: Int, month: Int) {
+        self.init(year: year, month: month, day: 1, hour: 0, minute: 0, second: 0)
     }
+    public init(month: Int, day: Int) {
+        self.init(year: 1970, month: month, day: day, hour: 0, minute: 0, second: 0)
+    }
+    public init(year: Int) {
+        self.init(year: year, month: 1, day: 1, hour: 0, minute: 0, second: 0)
+    }
+    public init(month: Int) {
+        self.init(year: 1970, month: month, day: 1, hour: 0, minute: 0, second: 0)
+    }
+    public init(day: Int) {
+        self.init(year: 1970, month: 1, day: day, hour: 0, minute: 0, second: 0)
+    }
+    
+    public init(hour: Int, minute: Int, second: Int) {
+        self.init(year: 1970, month: 1, day: 1, hour: hour, minute: minute, second: second)
+    }
+    public init(hour: Int, minute: Int) {
+        self.init(year: 1970, month: 1, day: 1, hour: hour, minute: minute, second: 0)
+    }
+    public init(minute: Int, second: Int) {
+        self.init(year: 1970, month: 1, day: 1, hour: 0, minute: minute, second: second)
+    }
+    public init(hour: Int) {
+        self.init(year: 1970, month: 1, day: 1, hour: hour, minute: 0, second: 0)
+    }
+    public init(minute: Int) {
+        self.init(year: 1970, month: 1, day: 1, hour: 0, minute: minute, second: 0)
+    }
+    public init(second: Int) {
+        self.init(year: 1970, month: 1, day: 1, hour: 0, minute: 0, second: second)
+    }
+    
     /// init with Date
     public init(_ nsDate: Date) {
         let dateStr = DateFormats.segments.string(nsDate)

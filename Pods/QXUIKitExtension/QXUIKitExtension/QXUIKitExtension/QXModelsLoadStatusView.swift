@@ -57,7 +57,7 @@ open class QXModelsLoadStatusView<T>: QXView {
     
     open func loadModels() {
         weak var ws = self
-        api?({ models, isThereMore in
+        api?.execute(currentPage, pageCount, { models, isThereMore in
             ws?.onLoadModelsOk(models, isThereMore: isThereMore)
         }, { err in
             ws?.onLoadModelsFailed(err)
@@ -81,21 +81,14 @@ open class QXModelsLoadStatusView<T>: QXView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    open override func layoutSubviews() {
+    override open func layoutSubviews() {
         super.layoutSubviews()
         contentView.qxRect = qxBounds.rectByReduce(padding)
         loadStatusView.qxRect = qxBounds.rectByReduce(padding)
     }
 
-    open override var intrinsicContentSize: CGSize {
-        if isDisplay {
-            if let e = intrinsicSize {
-                return e.cgSize
-            }
-            let e = loadStatusView.intrinsicContentSize
-            return e.qxSizeByAdd(padding.uiEdgeInsets)
-        }
-        return CGSize.zero
+    open override func natureContentSize() -> QXSize {
+        return loadStatusView.intrinsicContentSize.qxSize.sizeByAdd(padding)
     }
 
     /// 是否可以下拉刷新
@@ -130,18 +123,18 @@ open class QXModelsLoadStatusView<T>: QXView {
         }
     }
     
-    public lazy var refreshFooter: QXRefreshFooter = {
-        let one = QXRefreshFooter(refreshingBlock: {  [weak self] in
+    public final lazy var refreshFooter: QXRefreshFooter = {
+        let e = QXRefreshFooter(refreshingBlock: {  [weak self] in
             self?.footerStartRefresh()
         })!
-        return one
+        return e
     }()
     
-    public lazy var refreshHeader: QXRefreshHeader = {
-        let one = QXRefreshHeader(refreshingBlock: {  [weak self] in
+    public final lazy var refreshHeader: QXRefreshHeader = {
+        let e = QXRefreshHeader(refreshingBlock: {  [weak self] in
             self?.headerStartRefresh()
         })!
-        return one
+        return e
     }()
 
     public private(set) var modelsLoadStatus: QXModelsLoadStatus = .reload(.ok) {
@@ -224,7 +217,6 @@ open class QXModelsLoadStatusView<T>: QXView {
                 models += newModels
                 currentPage += 1
             }
-            contentView.qxReloadData()
             let isThereMore = isThereMore ?? (newModels.count > 0)
             switch statusBefore {
             case .reload(status: _):

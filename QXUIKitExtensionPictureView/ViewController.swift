@@ -15,6 +15,7 @@ class ViewController: QXTableViewController<Any> {
     
     lazy var pictureCell: QXStaticPictureCell = {
         let one = QXStaticPictureCell()
+        one.pictureView.isForceImageFill = true
         one.pictureView.picture = self.image
         return one
     }()

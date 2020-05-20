@@ -11,10 +11,10 @@ import IQKeyboardManagerSwift
 
 open class QXTextView: QXView, UITextViewDelegate {
 
-    public var respondBeginEditting: (() -> ())?
-    public var respondTextChange: ((_ text: String?, _ isEmpty: Bool) -> ())?
-    public var respondEndEditting: (() -> ())?
-    public var respondNeedsUpdate: (() -> ())?
+    public var respondBeginEditting: (() -> Void)?
+    public var respondTextChange: ((_ text: String?, _ isEmpty: Bool) -> Void)?
+    public var respondEndEditting: (() -> Void)?
+    public var respondNeedsUpdate: (() -> Void)?
     
     open var isEnabled: Bool = true {
         didSet {
@@ -62,20 +62,7 @@ open class QXTextView: QXView, UITextViewDelegate {
 
     public var filter: QXTextFilter? {
         didSet {
-            if let filter = filter {
-                switch filter {
-                case .integer(min: _, max: _):
-                    uiTextView.keyboardType = .decimalPad
-                case .double(min: _, max: _):
-                    uiTextView.keyboardType = .decimalPad
-                case .float(min: _, max: _):
-                    uiTextView.keyboardType = .decimalPad
-                case .number(limit: _):
-                    uiTextView.keyboardType = .numberPad
-                default:
-                    break
-                }
-            }
+            uiTextView.qxUpdateFilter(filter)
         }
     }
     
@@ -83,6 +70,8 @@ open class QXTextView: QXView, UITextViewDelegate {
         let e = UITextView()
         e.backgroundColor = UIColor.clear
         e.qxTintColor = QXColor.dynamicAccent
+        let p = e.textContainer.lineFragmentPadding
+        e.textContainerInset = UIEdgeInsets(top: 0, left: -p, bottom: 0, right: -p)
         e.delegate = self
         return e
     }()
@@ -144,14 +133,14 @@ open class QXTextView: QXView, UITextViewDelegate {
                     text = _text
                 }
             }
+            respondTextChange?(text, {
+                if let text = uiTextView.text {
+                    return text.isEmpty
+                }
+                return true
+            }())
+            respondNeedsUpdate?()
         }
         placeHolderLabel.isHidden = !text.isEmpty
-        respondTextChange?(text, {
-            if let text = uiTextView.text {
-                return text.isEmpty
-            }
-            return true
-        }())
-        respondNeedsUpdate?()
     }
 }

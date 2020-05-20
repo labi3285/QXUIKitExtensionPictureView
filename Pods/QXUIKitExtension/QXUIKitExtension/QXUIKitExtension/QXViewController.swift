@@ -11,20 +11,20 @@ import QXConsMaker
 
 open class QXViewController: UIViewController, UINavigationBarDelegate {
     
-    public var respondRefresh: (() -> ())?
+    public var respondRefresh: (() -> Void)?
     
     //MARK:- Init
-    public required init() {
+    public init() {
         super.init(nibName: nil, bundle: nil)
-        // make sure view init at start
-        _ = view
         automaticallyAdjustsScrollViewInsets = false
         edgesForExtendedLayout = UIRectEdge(rawValue: 0)
+        _ = self.view
     }
     public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     deinit {
+        NotificationCenter.default.removeObserver(self)
         QXDebugPrint("deinit")
     }
     
@@ -46,6 +46,10 @@ open class QXViewController: UIViewController, UINavigationBarDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
     }
     
+    open func didSetup() {
+        
+    }
+    
     open func viewWillFirstAppear(_ animated: Bool) {
         
     }
@@ -59,11 +63,20 @@ open class QXViewController: UIViewController, UINavigationBarDelegate {
         
     }
     
+    public private(set) var isSetup: Bool = false
     private var _isFirstWillAppear: Bool = true
     private var _isFirstDidAppear: Bool = true
     private var _isFirstWillDisappear: Bool = true
     private var _isFirstDidDisappear: Bool = true
-
+    
+    open override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+    }
+    open override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        if !isSetup { didSetup(); isSetup = true }
+    }
+    
     override open func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         if _isFirstWillAppear { viewWillFirstAppear(animated); _isFirstWillAppear = false }
@@ -104,6 +117,30 @@ open class QXViewController: UIViewController, UINavigationBarDelegate {
         didSet {
             navigationItem.rightBarButtonItem?
                 .setTitleTextAttributes(navigationBarItemFont.nsAttributtes, for: .normal)
+        }
+    }
+    
+    public var navigationBarLeftItem: QXBarButtonItem? {
+        set {
+            if let e = newValue {
+                navigationBarLeftItems = [e]
+            } else {
+                navigationBarLeftItems = []
+            }
+        }
+        get {
+            return navigationBarLeftItems.first
+        }
+    }
+    public var navigationBarLeftItems: [QXBarButtonItem] {
+        set {
+            for e in newValue {
+                e.setTitleTextAttributes(navigationBarItemFont.nsAttributtes, for: .normal)
+            }
+            navigationItem.leftBarButtonItems = newValue.reversed()
+        }
+        get {
+            return navigationItem.leftBarButtonItems as? [QXBarButtonItem] ?? []
         }
     }
 
@@ -157,6 +194,10 @@ open class QXViewController: UIViewController, UINavigationBarDelegate {
         return true
     }
     
+    open func updateAppearance() {
+        
+    }
+    
     //MARK:- Present
     // nil 表示不显示
     public var isNavigationBarAutoDismissItemAtLeft: Bool? = true { didSet { if _isNavigationBarInited { updateNavigationBar(false) } } }
@@ -171,13 +212,14 @@ open class QXViewController: UIViewController, UINavigationBarDelegate {
         
     public func push(_ vc: QXViewController, animated: Bool = true, file: StaticString = #file, line: UInt = #line) {
         if let nav = navigationController {
-            var baseVc = self
-            while ((baseVc.parent as? QXViewController) != nil) {
-                baseVc = baseVc.parent! as! QXViewController
+            var next: UIViewController = self
+            while let e = next.parent, (!(e is UINavigationController) && !(e is UITabBarController)) {
+                next = next.parent!
             }
+            let fromVc = next as? QXViewController ?? self
             if let navBar = vc.customNavigationBar {
                 navBar.qxTintColor = vc.navigationBarTintColor
-                if let button = navBar.autoCheckOrSetBackButton(image: vc.navigationBarBackArrowImage, title: vc.navigationBarBackTitle ?? baseVc.navigationBarTitle ?? baseVc.title, font: vc.navigationBarBackFont) {
+                if let button = navBar.autoCheckOrSetBackButton(image: vc.navigationBarBackArrowImage, title: vc.navigationBarBackTitle ?? fromVc.navigationBarTitle ?? fromVc.title, font: vc.navigationBarBackFont) {
                     button.respondClick = { [weak vc] in
                         if let e = vc {
                             if e.shouldPop() {
@@ -187,13 +229,13 @@ open class QXViewController: UIViewController, UINavigationBarDelegate {
                     }
                 }
             }
-            if let t = vc.navigationBarBackTitle ?? baseVc.navigationBarTitle ?? baseVc.title {
+            if let t = vc.navigationBarBackTitle ?? fromVc.navigationBarTitle ?? fromVc.title {
                 let e = QXBarButtonItem.backItem(t)
                 let font = vc.navigationBarBackFont
                 e.setTitleTextAttributes(font.nsAttributtes, for: .normal)
-                navigationItem.backBarButtonItem = e
+                fromVc.navigationItem.backBarButtonItem = e
             } else {
-                navigationItem.backBarButtonItem = nil
+                fromVc.navigationItem.backBarButtonItem = nil
             }
             navigationController?.navigationBar.backIndicatorImage = vc.navigationBarBackArrowImage.uiImage
             navigationController?.navigationBar.backIndicatorTransitionMaskImage = vc.navigationBarBackArrowImage.uiImage
@@ -239,7 +281,7 @@ open class QXViewController: UIViewController, UINavigationBarDelegate {
     public func dismiss(animated: Bool) {
         super.dismiss(animated: animated, completion: nil)
     }
-    public func dismiss(completion: @escaping (() -> ())) {
+    public func dismiss(completion: @escaping (() -> Void)) {
         super.dismiss(animated: true, completion: completion)
     }
     
@@ -389,4 +431,5 @@ extension UIViewController {
     }
     
 }
+
 

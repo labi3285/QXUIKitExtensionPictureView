@@ -10,7 +10,7 @@ import UIKit
 
 open class QXSwitchView: QXView {
     
-    public var respondChange: ((_ isOn: Bool) -> ())?
+    public var respondChange: ((_ isOn: Bool) -> Void)?
     
     open var isEnabled: Bool {
         set {
@@ -48,7 +48,7 @@ open class QXSwitchView: QXView {
     }
     
     open override func natureContentSize() -> QXSize {
-        return uiSwitch.intrinsicContentSize.qxSize.sizeByAdd(padding)
+        return uiSwitch.qxIntrinsicContentSize.sizeByAdd(padding)
     }
 
     override open func layoutSubviews() {

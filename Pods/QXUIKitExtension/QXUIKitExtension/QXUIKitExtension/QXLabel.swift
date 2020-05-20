@@ -83,7 +83,7 @@ open class QXLabel: QXView {
         if let e = fixWidth ?? maxWidth {
             var size = CGSize(width: e - padding.left - padding.right, height: QXView.extendLength)
             size = uiLabel.sizeThatFits(size)
-            return QXSize(e, size.height + padding.top + padding.bottom)
+            return size.qxSize.sizeByAdd(padding)
         } else {
             return uiLabel.sizeThatFits(QXView.extendSize.cgSize).qxSize.sizeByAdd(padding)
         }
@@ -101,7 +101,7 @@ open class QXLabel: QXView {
         case .center:
             x = (bounds.width - padding.left - padding.right - w) / 2 + padding.left
         case .right:
-            x = (bounds.width - padding.right - w) / 2 + padding.top
+            x = bounds.width - padding.right - w
         }
         let y: CGFloat
         switch alignmentY {
@@ -110,7 +110,7 @@ open class QXLabel: QXView {
         case .center:
             y = (bounds.height - padding.top - padding.bottom - h) / 2 + padding.top
         case .bottom:
-            y = (bounds.height - padding.bottom - h) / 2 + padding.top
+            y = bounds.height - padding.bottom - h
         }
         uiLabel.frame = CGRect(x: x, y: y, width: w, height: h)
     }
@@ -157,3 +157,4 @@ open class QXLabel: QXView {
     }
 
 }
+

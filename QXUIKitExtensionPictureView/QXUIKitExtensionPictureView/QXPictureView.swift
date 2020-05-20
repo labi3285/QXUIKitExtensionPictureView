@@ -20,7 +20,7 @@ open class QXPictureView: QXImageView {
     }
     
     open func handlePreview() {
-        guard let url = image?.url?.nsUrl else {
+        guard let url = image?.url?.nsURL else {
             return
         }
         let item = DSImageScrollItem()
@@ -30,9 +30,9 @@ open class QXPictureView: QXImageView {
         item.thumbView = thumbView
         item.isVisibleThumbView = true
         let view = DSImageShowView(items: [item], type: .showTypeDefault)
-        var container = qxVc?.navigationController?.view
+        var container = qxViewController?.navigationController?.view
         if container == nil {
-           container = qxVc?.view
+           container = qxViewController?.view
         }
         if container != nil {
            view?.presentfromImageView(thumbView, toContainer: container, index: index, animated: true, completion: {
@@ -78,7 +78,8 @@ open class QXPicturesView: QXArrangeView {
     public final lazy var pictureViews: [QXImageView] = {
         return (0..<self.maxCount).map { (i) -> QXImageView in
             let e = QXImageView()
-            e.isForceImageFill = true
+            e.contentMode = .scaleAspectFill
+            e.clipsToBounds = true
             e.isDisplay = false
             e.isUserInteractionEnabled = true
             e.tag = i
@@ -93,14 +94,14 @@ open class QXPicturesView: QXArrangeView {
     }
     
     open func handlePreview(_ currentIndex: Int) {
-        if pictureViews[currentIndex].image?.url?.nsUrl == nil {
+        if pictureViews[currentIndex].image?.url?.nsURL == nil {
             return
         }
         var items: [DSImageScrollItem] = []
         var newIndex: Int = 0
         for (i, view) in pictureViews.enumerated() {
             if view.isDisplay {
-                if let url = view.image?.url?.nsUrl {
+                if let url = view.image?.url?.nsURL {
                     let item = DSImageScrollItem()
                     item.largeImageURL = url
                     let thumbView = view.uiImageView
@@ -115,9 +116,9 @@ open class QXPicturesView: QXArrangeView {
             }
         }
         let view = DSImageShowView(items: items, type: .showTypeDefault)
-        var container = qxVc?.navigationController?.view
+        var container = qxViewController?.navigationController?.view
         if container == nil {
-            container = qxVc?.view
+            container = qxViewController?.view
         }
         let thumbView = pictureViews[currentIndex].uiImageView
         if container != nil {
@@ -130,7 +131,7 @@ open class QXPicturesView: QXArrangeView {
     public required init(_ maxCount: Int) {
         self.maxCount = maxCount
         super.init()
-        setupViews(pictureViews)
+        views = pictureViews
     }
     required public init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")

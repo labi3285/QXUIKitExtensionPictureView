@@ -33,11 +33,14 @@ public protocol QXViewProtocol {
     var natureSize: QXSize { get }
     /// 添加到父视图
     func addAsQXSubview(_ superview: UIView)
+    /// 从父视图移除
+    func removeFromSuperview()
+    
     /// 更新尺寸
     func updateRect(_ rect: QXRect)
-    /// 水平抵抗拉伸的等级
+    /// 水平抵抗压缩的等级
     var compressResistanceX: CGFloat { get set }
-    /// 垂直抵抗拉伸的等级
+    /// 垂直抵抗压缩的等级
     var compressResistanceY: CGFloat { get set }
     /// 水平抵抗延展的等级
     var stretchResistanceX: CGFloat { get set }
@@ -48,12 +51,14 @@ public protocol QXViewProtocol {
     var divideRatioX: CGFloat? { get set }
     /// 在容器里面如何均摊，nil表示不均摊
     var divideRatioY: CGFloat? { get set }
-    
+        
 }
 extension QXViewProtocol {
     public var isDisplay: Bool { get { return true } set {} }
     public var natureSize: QXSize { return QXSize.zero  }
     public func addAsQXSubview(_ superview: UIView) { }
+    public func removeFromSuperview() { }
+    
     public func updateRect(_ rect: QXRect) { }
     public var compressResistanceX: CGFloat { get { return 0 } set {} }
     public var compressResistanceY: CGFloat { get { return 0 } set {} }
@@ -62,6 +67,8 @@ extension QXViewProtocol {
     public var divideRatioX: CGFloat? { get { return nil } set {} }
     public var divideRatioY: CGFloat? { get { return nil } set {} }
     
+    public var isSelected: Bool { get { return false } set {} }
+
 }
 
 open class QXView: UIView, QXViewProtocol {
@@ -71,6 +78,56 @@ open class QXView: UIView, QXViewProtocol {
     public init() {
         super.init(frame: CGRect.zero)
     }
+    open var backLayers: [QXLayer]? {
+        didSet {
+            if let es = oldValue {
+                for e in es {
+                    e.layer.removeFromSuperlayer()
+                }
+            }
+            if let es = backLayers {
+                for e in es {
+                    backLayersContainerLayer.addSublayer(e.layer)
+                }
+                if backLayersContainerLayer.superlayer == nil {
+                    layer.insertSublayer(backLayersContainerLayer, at: 0)
+                }
+            }
+            setNeedsLayout()
+        }
+    }
+    open var backColor: QXColor? {
+        set {
+            qxBackgroundColor = newValue
+        }
+        get {
+            return qxBackgroundColor
+        }
+    }
+    
+    open var shadow: QXShadow? {
+        set {
+            self.qxShadow = newValue
+        }
+        get {
+            return qxShadow
+        }
+    }
+    
+    open var border: QXBorder? {
+        set {
+            self.qxBorder = newValue
+        }
+        get {
+            return qxBorder
+        }
+    }
+    
+    public final lazy var backLayersContainerLayer: CALayer = {
+        let e = CALayer()
+        e.masksToBounds = true
+        return e
+    }()
     
     public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -79,9 +136,17 @@ open class QXView: UIView, QXViewProtocol {
     open override func layoutSubviews() {
         super.layoutSubviews()
         setNeedsDisplay()
+        if let es = backLayers {
+            backLayersContainerLayer.frame = bounds
+            backLayersContainerLayer.cornerRadius = layer.cornerRadius
+            for e in es {
+                e.layer.frame = bounds
+                e.layer.cornerRadius = layer.cornerRadius
+            }
+        }
     }
     
-    public var respondNeedsLayout: (() -> ())?
+    public var respondNeedsLayout: (() -> Void)?
     
     override open func invalidateIntrinsicContentSize() {
         super.invalidateIntrinsicContentSize()
@@ -120,16 +185,16 @@ open class QXView: UIView, QXViewProtocol {
         return sizeThatFits(targetSize)
     }
     open override func sizeThatFits(_ size: CGSize) -> CGSize {
-        let wh = intrinsicContentSize
-        var w = wh.width
-        var h = wh.height
+        let wh = natureSize
+        var w = wh.w
+        var h = wh.h
         w = min(size.width, w)
         h = min(size.height, h)
         return CGSize(width: w, height: h)
     }
     override open func sizeToFit() {
-        let wh = intrinsicContentSize
-        frame = CGRect(x: frame.minX, y: frame.minY, width: wh.width, height: wh.height)
+        let wh = natureSize
+        frame = CGRect(x: frame.minX, y: frame.minY, width: wh.w, height: wh.h)
     }
 
     //MARK:- QXViewProtocol
@@ -142,6 +207,10 @@ open class QXView: UIView, QXViewProtocol {
     open func addAsQXSubview(_ superview: UIView) {
         superview.addSubview(self)
     }
+    override open func removeFromSuperview() {
+        super.removeFromSuperview()
+    }
+    
     open func updateRect(_ rect: QXRect) {
         qxRect = rect
     }
@@ -220,33 +289,8 @@ open class QXView: UIView, QXViewProtocol {
     
     open var divideRatioX: CGFloat? = nil
     open var divideRatioY: CGFloat? = nil
-    
+        
 }
-
-extension QXView {
-    
-    public var viewController: QXViewController? {
-        return qxViewController as? QXViewController
-    }
-    
-}
-
-extension UIView {
-    
-    public var qxViewController: UIViewController? {
-        var next: UIResponder? = self
-        repeat {
-            next = next?.next
-            if let vc = next as? UIViewController {
-                return vc
-            }
-            
-        } while next != nil
-        return nil
-    }
-    
-}
-
 
 extension UIView {
     
@@ -256,7 +300,7 @@ extension UIView {
         setNeedsDisplay()
     }
     
-    public var qxVc: UIViewController? {
+    public var uiViewController: UIViewController? {
         var view: UIView? = self
         while view != nil {
             if let r = view?.next {
@@ -267,6 +311,9 @@ extension UIView {
             view = view?.superview
         }
         return nil
+    }
+    public var qxViewController: QXViewController? {
+        return uiViewController as? QXViewController
     }
     
     public var qxIntrinsicContentSize: QXSize{
@@ -299,5 +346,6 @@ extension QXView {
         return "\(type(of: self))\(self.frame)"
     }
 }
+
 
 

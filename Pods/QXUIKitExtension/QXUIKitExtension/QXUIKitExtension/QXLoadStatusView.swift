@@ -9,46 +9,62 @@
 import UIKit
 
 public enum QXLoadStatus {
-    case loading(_ msg: String?)
-    case ok
-    case error(_ err: QXError?)
+    case loading
+    case succeed
+    case failed(_ err: QXError?)
     case empty(_ msg: String?)
 }
 
 public protocol QXLoadStatusViewProtocol {
     func qxLoadStatusViewUpdateStatus(_ status: QXLoadStatus)
-    func qxLoadStatusViewRetryHandler(_ todo: (() -> ())?)
-}
-
-public protocol QXContentViewDelegate: class {
-    func qxContentViewNeedsReloadData()
-}
-
-open class QXContentLoadStatusView<T>: QXView {
-        
-    public var api: QXModelApi<T>?
-    public var emptyMessage: String = "暂无内容"
+    func qxLoadStatusViewRetryHandler(_ todo: (() -> Void)?)
     
+    func qxLoadStatusViewLoadingText() -> String?
+    func qxLoadStatusViewDefaultErrorText() -> String?
+    func qxLoadStatusViewDefaultEmptyText() -> String?
+}
+
+public protocol QXcontentViewDelegate: class {
+    func qxcontentViewNeedsReloadData()
+}
+
+open class QXContentLoadStatusView<Model>: QXView {
+        
+    public var api: ( (@escaping (QXRequest.Respond<Model>)->() ) -> Void)?
+    
+    open func loadData(done: @escaping (QXRequest.Respond<Model>) -> Void) {
+        if let e = api {
+            e(done)
+        } else {
+            done(.failed(QXError(-1, "请重写loadData或者提供api")))
+        }
+    }
+            
     open func reloadData() {
         weak var ws = self
-        api?.api({ model in
-           if model == nil {
-                ws?.loadStatus = .empty(ws?.emptyMessage)
-           } else {
-                ws?.loadStatus = .ok
-           }
-        }, { err in
-            ws?.loadStatus = .error(err)
-        })
+        _requestId += 1
+        let id = _requestId
+        ws?.loadStatus = .loading
+        loadData { (respond) in
+            if id == (ws?._requestId ?? -1) {
+                switch respond {
+                case .succeed(_):
+                    ws?.loadStatus = .succeed
+                case .failed(let err):
+                    ws?.loadStatus = .failed(err)
+                }
+            }
+        }
     }
+    private var _requestId: Int = -1
     
-    open var loadStatus: QXLoadStatus = .ok {
+    open var loadStatus: QXLoadStatus = .succeed {
         didSet {
             switch loadStatus {
-            case .ok:
+            case .succeed:
                 loadStatusView.isHidden = true
                 contentView.isHidden = false
-            case .loading(msg: _):
+            case .loading:
                 loadStatusView.isHidden = false
                 contentView.isHidden = true
                 loadStatusView.qxLoadStatusViewUpdateStatus(loadStatus)
@@ -56,7 +72,7 @@ open class QXContentLoadStatusView<T>: QXView {
                 loadStatusView.isHidden = false
                 contentView.isHidden = true
                 loadStatusView.qxLoadStatusViewUpdateStatus(loadStatus)
-            case .error(err: _):
+            case .failed(err: _):
                 loadStatusView.isHidden = false
                 contentView.isHidden = true
                 loadStatusView.qxLoadStatusViewUpdateStatus(loadStatus)
@@ -87,7 +103,7 @@ open class QXContentLoadStatusView<T>: QXView {
     }
     
     open override func natureContentSize() -> QXSize {
-        return loadStatusView.intrinsicContentSize.qxSize.sizeByAdd(padding)
+        return loadStatusView.qxIntrinsicContentSize.sizeByAdd(padding)
     }
     
 }
@@ -128,7 +144,7 @@ open class QXLoadStatusView: UIView {
     open var emptyTextFont: QXFont = QXFont(13, QXColor.dynamicPlaceHolder)
     open var errorTextFont: QXFont = QXFont(13, QXColor.dynamicPlaceHolder)
     
-    open var defaultLoadingText: String? = "加载中"
+    open var loadingText: String? = nil
     open var defaultEmptyText: String? = "暂无内容"
     open var defaultErrorText: String? = "请求失败"
     
@@ -161,7 +177,7 @@ open class QXLoadStatusView: UIView {
     public final lazy var retryButton: QXTitleButton = {
         let e = QXTitleButton()
         e.backView.qxBorder = QXBorder().setCornerRadius(5)
-        e.backView.qxBackgroundColor = QXColor.dynamicButton
+        e.backView.backColor = QXColor.dynamicButton
         e.font = QXFont(14, QXColor.dynamicButtonText)
         e.title = "点击重试"
         e.padding = QXEdgeInsets(7, 10, 7, 10)
@@ -173,7 +189,7 @@ open class QXLoadStatusView: UIView {
     }()
     public final lazy var stackView: QXStackView = {
         let e = QXStackView()
-        e.setupViews([self.loadingView, self.iconView, self.contentLabel, self.retryButton])
+        e.views = [self.loadingView, self.iconView, self.contentLabel, self.retryButton]
         e.isVertical = true
         e.alignmentX = .center
         e.alignmentY = .center
@@ -192,7 +208,7 @@ open class QXLoadStatusView: UIView {
         super.layoutSubviews()
         let rect = qxRect.absoluteRect
         contentLabel.fixWidth = rect.w
-        let size = stackView.qxIntrinsicContentSize
+        let size = stackView.natureSize
         let top = (rect.h - size.h) * topBottomRatio / (topBottomRatio + 1)
         stackView.qxRect = rect.insideRect(.top(top), .center, .size(size))
     }
@@ -201,53 +217,62 @@ open class QXLoadStatusView: UIView {
 
 extension QXLoadStatusView: QXLoadStatusViewProtocol {
     
-     public func qxLoadStatusViewUpdateStatus(_ status: QXLoadStatus) {
+    public func qxLoadStatusViewUpdateStatus(_ status: QXLoadStatus) {
         switch status {
-           case .ok:
-               self.isHidden = true
-           case .loading(let msg):
-               self.isHidden = false
-               let text = msg ?? defaultLoadingText
-               contentLabel.font = loadingTextFont
-               contentLabel.text = text ?? ""
-               contentLabel.isDisplay = text != nil
-               loadingView.isDisplay = loadingIcon == nil
-               iconView.isDisplay = loadingIcon != nil
-               iconView.image = loadingIcon
-               retryButton.isDisplay = false
-               if loadingIcon == nil {
+        case .succeed:
+            self.isHidden = true
+        case .loading:
+            self.isHidden = false
+            let text = loadingText
+            contentLabel.font = loadingTextFont
+            contentLabel.text = text ?? ""
+            contentLabel.isDisplay = text != nil
+            loadingView.isDisplay = loadingIcon == nil
+            iconView.isDisplay = loadingIcon != nil
+            iconView.image = loadingIcon
+            retryButton.isDisplay = false
+            if loadingIcon == nil {
                 loadingView.startAnimating()
-               }
-           case .empty(let msg):
-               self.isHidden = false
-               let text = msg ?? defaultEmptyText
-               loadingView.stopAnimating()
-               contentLabel.font = emptyTextFont
-               contentLabel.text = text ?? ""
-               loadingView.isHidden = true
-               iconView.image = emptyIcon
-               loadingView.isDisplay = false
-               iconView.isDisplay = emptyIcon != nil
-               contentLabel.isDisplay = text != nil
-               retryButton.isDisplay = isEmptyRetryEnabled && isRetryButtonShow
-           case .error(let err):
-               self.isHidden = false
-               let text = err?.message ?? defaultErrorText
-               loadingView.stopAnimating()
-               contentLabel.font = errorTextFont
-               contentLabel.text = text ?? ""
-               loadingView.isDisplay = false
-               iconView.image = errorIcon
-               iconView.isDisplay = errorIcon != nil
-               contentLabel.isDisplay = text != nil
-               retryButton.isDisplay = isRetryButtonShow
-           }
-           qxSetNeedsLayout()
-        
+            }
+        case .empty(let msg):
+            self.isHidden = false
+            let text = msg ?? defaultEmptyText
+            loadingView.stopAnimating()
+            contentLabel.font = emptyTextFont
+            contentLabel.text = text ?? ""
+            loadingView.isHidden = true
+            iconView.image = emptyIcon
+            loadingView.isDisplay = false
+            iconView.isDisplay = emptyIcon != nil
+            contentLabel.isDisplay = text != nil
+            retryButton.isDisplay = isEmptyRetryEnabled && isRetryButtonShow
+        case .failed(let err):
+            self.isHidden = false
+            let text = err?.message ?? defaultErrorText
+            loadingView.stopAnimating()
+            contentLabel.font = errorTextFont
+            contentLabel.text = text ?? ""
+            loadingView.isDisplay = false
+            iconView.image = errorIcon
+            iconView.isDisplay = errorIcon != nil
+            contentLabel.isDisplay = text != nil
+            retryButton.isDisplay = isRetryButtonShow
+        }
+        qxSetNeedsLayout()
     }
     
-    public func qxLoadStatusViewRetryHandler(_ todo: (() -> ())?) {
+    public func qxLoadStatusViewRetryHandler(_ todo: (() -> Void)?) {
         retryButton.respondClick = todo
     }
     
+    public func qxLoadStatusViewLoadingText() -> String? {
+        return loadingText
+    }
+    public func qxLoadStatusViewDefaultEmptyText() -> String? {
+        return defaultEmptyText
+    }
+    public func qxLoadStatusViewDefaultErrorText() -> String? {
+        return defaultErrorText
+    }
+
  }

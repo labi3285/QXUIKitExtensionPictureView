@@ -13,16 +13,16 @@ import DSImageBrowse
 
 open class QXStaticPictureCell: QXStaticCell {
     
-    open override func height(_ model: Any?, _ width: CGFloat) -> CGFloat? {
-        pictureView.fixWidth = width
+    open override func height(_ model: Any?) -> CGFloat? {
+        pictureView.fixWidth = context.givenWidth
         return pictureView.natureSize.h
     }
-    
+
     public final lazy var pictureView: QXPictureView = {
         let e = QXPictureView()
         e.padding = QXEdgeInsets(5, 15, 5, 15)
         e.respondUpdateImage = { [weak self] in
-            self?.tableView?.setNeedsUpdate()
+            self?.context?.tableView?.setNeedsUpdate()
         }
         return e
     }()

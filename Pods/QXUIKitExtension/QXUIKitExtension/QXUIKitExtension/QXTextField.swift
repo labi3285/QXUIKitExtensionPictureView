@@ -10,10 +10,10 @@ import UIKit
 
 open class QXTextField: QXView, UITextFieldDelegate {
     
-    public var respondBeginEditting: (() -> ())?
-    public var respondTextChange: ((_ text: String?, _ isEmpty: Bool) -> ())?
-    public var respondEndEditting: (() -> ())?
-    public var respondReturn: (() -> ())?
+    public var respondBeginEditting: (() -> Void)?
+    public var respondTextChange: ((_ text: String?, _ isEmpty: Bool) -> Void)?
+    public var respondEndEditting: (() -> Void)?
+    public var respondReturn: (() -> Void)?
     
     open var isEnabled: Bool = true {
         didSet {
@@ -53,29 +53,14 @@ open class QXTextField: QXView, UITextFieldDelegate {
     
     public var filter: QXTextFilter? {
         didSet {
-            if let filter = filter {
-                switch filter {
-                case .integer(min: _, max: _):
-                    uiTextField.keyboardType = .decimalPad
-                case .double(min: _, max: _):
-                    uiTextField.keyboardType = .decimalPad
-                case .float(min: _, max: _):
-                    uiTextField.keyboardType = .decimalPad
-                case .number(limit: _):
-                    uiTextField.keyboardType = .numberPad
-                case .money(min: _, max: _):
-                    uiTextField.keyboardType = .decimalPad
-                default:
-                    break
-                }
-            }
+            uiTextField.qxUpdateFilter(filter)
         }
     }
         
-    public var pickerView: QXPickerKeyboardView? {
+    public var pickerView: QXPickersView? {
         didSet {
             if let e = pickerView {
-                uiTextField.inputView = e
+                uiTextField.inputView = QXKeyboardView(e)
                 e.respondItem = { [weak self] item in
                     self?.pickedItems = item?.items()
                     self?.pickedItem = item
@@ -98,7 +83,47 @@ open class QXTextField: QXView, UITextFieldDelegate {
             pickerView?.bringInPickedItems = bringInPickedItems
         }
     }
-            
+    
+    open var iconView: QXView? {
+        didSet {
+            if let e = oldValue {
+                e.removeFromSuperview()
+            }
+            if let e = iconView {
+                addSubview(e)
+                layoutSubviews()
+            }
+        }
+    }
+    open var clearButton: QXButton? {
+        didSet {
+            if let e = oldValue {
+                e.removeFromSuperview()
+            }
+            if let e = clearButton {
+                addSubview(e)
+                e.isDisplay = text.count > 0
+                layoutSubviews()
+                e.respondClick = { [unowned self] in
+                    self.text = ""
+                }
+            }
+        }
+    }
+    open var handleButton: QXButton? {
+        didSet {
+            if let e = oldValue {
+                e.removeFromSuperview()
+            }
+            if let e = handleButton {
+                addSubview(e)
+                layoutSubviews()
+            }
+        }
+    }
+    
+    public var buttonMargin: CGFloat = 0
+    
     public final lazy var uiTextField: UITextField = {
         let e = UITextField()
         e.clearButtonMode = .never
@@ -134,16 +159,79 @@ open class QXTextField: QXView, UITextFieldDelegate {
             w = padding.left + e + padding.right
             h = padding.top + size.height + padding.bottom
         } else {
-            let size = uiTextField.intrinsicContentSize
-            w = padding.left + size.width + padding.right
-            h = padding.top + size.height + padding.bottom
+            let tfwh = uiTextField.intrinsicContentSize
+            var leftSpace: CGFloat = 0
+            var rightSpace: CGFloat = 0
+            var maxH: CGFloat = 0
+            if let e = iconView, e.isDisplay {
+                let wh = e.natureSize
+                leftSpace += wh.w + buttonMargin
+                maxH = max(maxH, wh.h)
+            }
+            if let e = clearButton, e.isDisplay {
+                let wh = e.natureSize
+                rightSpace += wh.w
+                maxH = max(maxH, wh.h)
+            }
+            if let e = handleButton, e.isDisplay {
+                let wh = e.natureSize
+                rightSpace += wh.w
+                maxH = max(maxH, wh.h)
+            }
+            if let a = clearButton, a.isDisplay, let b = handleButton, b.isDisplay {
+                rightSpace += buttonMargin * 2
+            } else if let a = clearButton, a.isDisplay {
+                rightSpace += buttonMargin
+            } else if let b = handleButton, b.isDisplay {
+                rightSpace += buttonMargin
+            }
+            w = padding.left + tfwh.width + leftSpace + rightSpace + padding.right
+            h = padding.left + max(tfwh.height, maxH) + padding.right
         }
         return QXSize(w, h)
     }
 
     override open func layoutSubviews() {
         super.layoutSubviews()
-        uiTextField.qxRect = qxBounds.rectByReduce(padding)
+        if let i = iconView, i.isDisplay {
+            let whi = i.natureSize
+            i.qxRect = qxBounds.insideRect(.left(padding.left), .center, .size(whi))
+            if let a = clearButton, a.isDisplay, let b = handleButton, b.isDisplay {
+                let wha = a.natureSize
+                let whb = b.natureSize
+                b.qxRect = qxBounds.insideRect(.right(padding.right), .center, .size(whb))
+                a.qxRect = qxBounds.insideRect(.right(padding.right + whb.w + buttonMargin), .center, .size(wha))
+                uiTextField.qxRect = qxBounds.insideRect(.left(padding.left + whi.w + buttonMargin), .top(padding.top), .bottom(padding.bottom), .right(padding.right + buttonMargin + wha.w + buttonMargin + whb.w))
+            } else if let a = clearButton, a.isDisplay {
+                let wha = a.natureSize
+                a.qxRect = qxBounds.insideRect(.right(padding.right), .center, .size(wha))
+                uiTextField.qxRect = qxBounds.insideRect(.left(padding.left + whi.w + buttonMargin), .top(padding.top), .bottom(padding.bottom), .right(padding.right + wha.w + buttonMargin))
+            } else if let b = handleButton, b.isDisplay {
+               let whb = b.natureSize
+               b.qxRect = qxBounds.insideRect(.right(padding.right), .center, .size(whb))
+               uiTextField.qxRect = qxBounds.insideRect(.left(padding.left + whi.w + buttonMargin), .top(padding.top), .bottom(padding.bottom), .right(padding.right + whb.w + buttonMargin))
+            } else {
+                uiTextField.qxRect = qxBounds.insideRect(.left(padding.left + whi.w + buttonMargin), .top(padding.top), .bottom(padding.bottom), .right(padding.right))
+            }
+        } else {
+            if let a = clearButton, a.isDisplay, let b = handleButton, b.isDisplay {
+                let wha = a.natureSize
+                let whb = b.natureSize
+                b.qxRect = qxBounds.insideRect(.right(padding.right), .center, .size(whb))
+                a.qxRect = qxBounds.insideRect(.right(padding.right + whb.w + buttonMargin), .center, .size(wha))
+                uiTextField.qxRect = qxBounds.insideRect(.left(padding.left), .top(padding.top), .bottom(padding.bottom), .right(padding.right + whb.w + buttonMargin + whb.w + buttonMargin + wha.w))
+            } else if let a = clearButton, a.isDisplay {
+                let wha = a.natureSize
+                a.qxRect = qxBounds.insideRect(.right(padding.right), .center, .size(wha))
+                uiTextField.qxRect = qxBounds.insideRect(.left(padding.left), .top(padding.top), .bottom(padding.bottom), .right(padding.right + wha.w + buttonMargin))
+            } else if let b = handleButton, b.isDisplay {
+               let whb = b.natureSize
+               b.qxRect = qxBounds.insideRect(.right(padding.right), .center, .size(whb))
+               uiTextField.qxRect = qxBounds.insideRect(.left(padding.left), .top(padding.top), .bottom(padding.bottom), .right(padding.right + whb.w + buttonMargin))
+            } else {
+                uiTextField.qxRect = qxBounds.rectByReduce(padding)
+            }
+        }
         coverView.qxRect = uiTextField.qxRect
     }
     
@@ -181,13 +269,17 @@ open class QXTextField: QXView, UITextFieldDelegate {
                     text = _text
                 }
             }
+            respondTextChange?(text, {
+                if let text = uiTextField.text {
+                    return text.isEmpty
+                }
+                return true
+            }())
         }
-        respondTextChange?(text, {
-            if let text = uiTextField.text {
-                return text.isEmpty
-            }
-            return true
-        }())        
+        clearButton?.isDisplay = text.count > 0
+        layoutSubviews()
     }
 }
+
+
 

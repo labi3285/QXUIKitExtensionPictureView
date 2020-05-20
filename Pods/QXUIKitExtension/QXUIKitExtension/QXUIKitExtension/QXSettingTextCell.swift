@@ -11,8 +11,8 @@ import QXConsMaker
 
 open class QXSettingTextCell: QXSettingCell {
     
-    override open func height(_ model: Any?, _ width: CGFloat) -> CGFloat? {
-        label.maxWidth = width
+    open override func height(_ model: Any?) -> CGFloat? {
+        label.fixWidth = context.givenWidth
         return label.intrinsicContentSize.height
     }
 
@@ -29,6 +29,7 @@ open class QXSettingTextCell: QXSettingCell {
         super.init()
         contentView.addSubview(label)
         label.IN(contentView).LEFT.RIGHT.TOP.BOTTOM.MAKE()
+        fixHeight = nil
     }
     public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")

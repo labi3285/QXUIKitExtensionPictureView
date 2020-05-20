@@ -10,42 +10,50 @@ import UIKit
 
 open class QXArrangeView: QXView {
         
+    public var alignmentX: QXAlignmentX = .left
+
     public var viewMarginX: CGFloat = 10
     public var viewMarginY: CGFloat = 10
     public var lineAlignment: QXAlignmentY = .center
-        
-    public private(set) var views: [QXViewProtocol] = []
     
-    public func setupViews(_ views: QXViewProtocol...) {
-        setupViews(views)
-    }
-
-    public func setupViews(_ views: [QXViewProtocol]) {
-        for view in subviews {
-            view.removeFromSuperview()
-        }
+    /// 是否允许背景的点击，允许后背景不能穿透
+    public var isBackUserInteractionEnabled = false
+    
+    public convenience init(views: [QXViewProtocol]) {
+        self.init()
         self.views = views
-        for view in views {
-            view.addAsQXSubview(self)
+    }
+    public convenience init(views: [QXViewProtocol], viewMarginX: CGFloat, viewMarginY: CGFloat) {
+        self.init()
+        self.viewMarginX = viewMarginX
+        self.viewMarginY = viewMarginY
+        self.views = views
+    }
+        
+    open var views: [QXViewProtocol] = [] {
+        didSet {
+            for view in subviews {
+                view.removeFromSuperview()
+            }
+            for view in views {
+                view.addAsQXSubview(self)
+            }
+            qxSetNeedsLayout()
         }
-        qxSetNeedsLayout()
     }
     
     override open func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        if let _ = super.hitTest(point, with: event) {
-              for view in subviews {
-                  if view.isUserInteractionEnabled {
-                      let point = view.convert(point, from: self)
-                      if view.point(inside: point, with: event) {
-                          return view.hitTest(point, with: event)
-                      }
-                  }
-              }
-              return nil
+        if let view = super.hitTest(point, with: event) {
+            if view === self && !isBackUserInteractionEnabled {
+                return nil
+            } else {
+                return view
+            }
+        } else {
+            return nil
         }
-        return nil
     }
-    
+
     override open func layoutSubviews() {
         super.layoutSubviews()
         for e in _viewRects(bounds.width) {
@@ -60,13 +68,14 @@ open class QXArrangeView: QXView {
         var lineSizes: [(size: QXSize?, space: CGFloat?, flex: CGFloat?)] = []
         for e in showViews {
             let wh = e.natureSize
-            if x + wh.w <= width - padding.right {
+            // 0.3 为误差范围
+            if x + wh.w <= width - padding.right + 0.3 {
                 if e is UIView {
                     x += wh.w + viewMarginX
                     lineSizes.append((wh, nil, nil))
                 } else if let e = e as? QXSpace {
                     x += wh.w
-                    lineSizes.append((nil, e.space, nil))
+                    lineSizes.append((nil, e.w, nil))
                 } else if let e = e as? QXFlexSpace {
                     lineSizes.append((nil, nil, e.ratio))
                 }
@@ -78,8 +87,8 @@ open class QXArrangeView: QXView {
                     x = padding.left + wh.w + viewMarginX
                     lineSizes = [(wh, nil, nil)]
                 } else if let e = e as? QXSpace {
-                    x = padding.left + e.space
-                    lineSizes = [(nil, e.space, nil)]
+                    x = padding.left + e.w
+                    lineSizes = [(nil, e.w, nil)]
                 } else if let e = e as? QXFlexSpace {
                     lineSizes = [(nil, nil, e.ratio)]
                 }
@@ -114,6 +123,22 @@ open class QXArrangeView: QXView {
             }
             let lineFlexSpace = width - lineViewsW - padding.left - padding.right
             x = padding.left
+            switch alignmentX {
+            case .left:
+                break
+            case .center:
+                if arr.first(where: {$0.flex != nil}) == nil {
+                    x += lineFlexSpace / 2
+                } else {
+                    break
+                }
+            case .right:
+                if arr.first(where: {$0.flex != nil}) == nil {
+                    x += lineFlexSpace
+                } else {
+                    break
+                }
+            }
             for e in arr {
                 if let e = e.size {
                     let dy: CGFloat

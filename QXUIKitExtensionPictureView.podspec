@@ -1,5 +1,7 @@
 Pod::Spec.new do |s|
 
+s.swift_versions = "5.0"
+
 s.name         = "QXUIKitExtensionPictureView"
 s.version      = "0.0.3"
 s.summary      = "QXPictrueView UIs base on QXUIKitExtension & "

@@ -30,9 +30,9 @@ open class QXPictureView: QXImageView {
         item.thumbView = thumbView
         item.isVisibleThumbView = true
         let view = DSImageShowView(items: [item], type: .showTypeDefault)
-        var container = qxViewController?.navigationController?.view
+        var container = uiViewController?.navigationController?.view
         if container == nil {
-           container = qxViewController?.view
+           container = uiViewController?.view
         }
         if container != nil {
            view?.presentfromImageView(thumbView, toContainer: container, index: index, animated: true, completion: {
@@ -116,9 +116,9 @@ open class QXPicturesView: QXArrangeView {
             }
         }
         let view = DSImageShowView(items: items, type: .showTypeDefault)
-        var container = qxViewController?.navigationController?.view
+        var container = uiViewController?.navigationController?.view
         if container == nil {
-            container = qxViewController?.view
+            container = uiViewController?.view
         }
         let thumbView = pictureViews[currentIndex].uiImageView
         if container != nil {

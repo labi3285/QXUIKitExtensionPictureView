@@ -9,7 +9,7 @@
 import UIKit
 import QXConsMaker
 import QXUIKitExtension
-import DSImageBrowse
+import QXDSImageBrowse
 
 open class QXStaticPictureCell: QXStaticCell {
     

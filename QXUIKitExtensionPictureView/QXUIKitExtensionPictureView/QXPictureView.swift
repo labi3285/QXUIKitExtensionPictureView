@@ -8,50 +8,49 @@
 
 import UIKit
 import QXUIKitExtension
-import DSImageBrowse
+import QXDSImageBrowse
 
 open class QXPictureView: QXImageView {
-        
-    public var index: Int = 0
-    
+            
     public var picture: QXImage? {
         set { image = newValue }
         get { return image }
     }
     
-    open func handlePreview() {
-        guard let url = image?.url?.nsURL else {
-            return
-        }
-        let item = DSImageScrollItem()
-        item.largeImageURL = url
-        let thumbView = uiImageView
-        item.largeImageSize = thumbView.size
-        item.thumbView = thumbView
-        item.isVisibleThumbView = true
-        let view = DSImageShowView(items: [item], type: .showTypeDefault)
-        var container = uiViewController?.navigationController?.view
-        if container == nil {
-           container = uiViewController?.view
-        }
-        if container != nil {
-           view?.presentfromImageView(thumbView, toContainer: container, index: index, animated: true, completion: {
-           })
-        }
-    }
+    public var handlerPreview: (() -> ())?
+
     public override init() {
         super.init()
         isUserInteractionEnabled = true
-        let tap = UITapGestureRecognizer(target: self, action: #selector(tapGesture(_:)))
-        addGestureRecognizer(tap)
+        uiImageView.contentMode = .scaleAspectFill
+        uiImageView.clipsToBounds = true
+        handlerPreview = { [weak self] in
+            if let s = self {
+                let item = DSImageScrollItem()
+                item.localImage = s.image?.uiImage
+                item.largeImageURL = s.image?.url?.nsURL
+                let thumbView = s.uiImageView
+                item.largeImageSize = thumbView.size
+                item.thumbView = thumbView
+                item.isVisibleThumbView = true
+                let view = DSImageShowView(items: [item], type: .showTypeDefault)
+                var container = s.uiViewController?.navigationController?.view
+                if container == nil {
+                    container = s.uiViewController?.view
+                }
+                if container != nil {
+                   view?.presentfromImageView(thumbView, toContainer: container, index: 0, animated: true, completion: {
+                   })
+                }
+            }
+        }
     }
     required public init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    @objc func tapGesture(_ recognizer: UITapGestureRecognizer) {
-        handlePreview()
+    open override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        handlerPreview?()
     }
-    
 }
 
 open class QXPicturesView: QXArrangeView {
@@ -65,7 +64,7 @@ open class QXPicturesView: QXArrangeView {
                 if i < 9 {
                     let v = pictureViews[i]
                     v.isDisplay = true
-                    v.image = e
+                    v.picture = e
                 }
             }
             qxSetNeedsLayout()
@@ -75,17 +74,13 @@ open class QXPicturesView: QXArrangeView {
         }
     }
 
-    public final lazy var pictureViews: [QXImageView] = {
-        return (0..<self.maxCount).map { (i) -> QXImageView in
-            let e = QXImageView()
-            e.contentMode = .scaleAspectFill
-            e.clipsToBounds = true
+    public final lazy var pictureViews: [QXPictureView] = {
+        return (0..<self.maxCount).map { (i) -> QXPictureView in
+            let e = QXPictureView()
             e.isDisplay = false
-            e.isUserInteractionEnabled = true
-            e.tag = i
-            let tap = UITapGestureRecognizer(target: self, action: #selector(tapGesture(_:)))
-            e.isUserInteractionEnabled = true
-            e.addGestureRecognizer(tap)
+            e.handlerPreview = { [weak self] in
+                self?.handlePreview(i)
+            }
             return e
         }
     }()
@@ -94,24 +89,20 @@ open class QXPicturesView: QXArrangeView {
     }
     
     open func handlePreview(_ currentIndex: Int) {
-        if pictureViews[currentIndex].image?.url?.nsURL == nil {
-            return
-        }
         var items: [DSImageScrollItem] = []
         var newIndex: Int = 0
         for (i, view) in pictureViews.enumerated() {
             if view.isDisplay {
-                if let url = view.image?.url?.nsURL {
-                    let item = DSImageScrollItem()
-                    item.largeImageURL = url
-                    let thumbView = view.uiImageView
-                    item.largeImageSize = thumbView.size
-                    item.thumbView = thumbView
-                    item.isVisibleThumbView = true
-                    items.append(item)
-                    if i < currentIndex {
-                         newIndex += 1
-                    }
+                let item = DSImageScrollItem()
+                item.localImage = view.image?.uiImage
+                item.largeImageURL = view.image?.url?.nsURL
+                let thumbView = view.uiImageView
+                item.largeImageSize = thumbView.size
+                item.thumbView = thumbView
+                item.isVisibleThumbView = true
+                items.append(item)
+                if i < currentIndex {
+                     newIndex += 1
                 }
             }
         }

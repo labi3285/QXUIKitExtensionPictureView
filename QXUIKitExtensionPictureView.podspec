@@ -3,7 +3,7 @@ Pod::Spec.new do |s|
 s.swift_versions = "5.0"
 
 s.name         = "QXUIKitExtensionPictureView"
-s.version      = "0.0.3"
+s.version      = "0.0.4"
 s.summary      = "QXPictrueView UIs base on QXUIKitExtension & "
 s.description  = <<-DESC
 UIKit extensions in swift. Just enjoy!
@@ -17,7 +17,7 @@ s.source_files = "QXUIKitExtensionPictureView/QXUIKitExtensionPictureView/*"
 s.requires_arc = true
 
 s.dependency 'QXUIKitExtension'
-s.dependency 'DSImageBrowse', '~> 1.0.2'
+s.dependency 'QXDSImageBrowse'
 
 # pod trunk push QXUIKitExtensionPictureView.podspec --allow-warnings
 

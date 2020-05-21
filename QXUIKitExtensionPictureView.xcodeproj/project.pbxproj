@@ -15,6 +15,7 @@
 		75BB3D74236BC8360065ADE5 /* QXStaticPicturesCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75BB3D71236BC8360065ADE5 /* QXStaticPicturesCell.swift */; };
 		75BB3D75236BC8360065ADE5 /* QXPictureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75BB3D72236BC8360065ADE5 /* QXPictureView.swift */; };
 		75BB3D76236BC8360065ADE5 /* QXStaticPictureCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75BB3D73236BC8360065ADE5 /* QXStaticPictureCell.swift */; };
+		75C42D532476AA7600882D6F /* pic_lock.png in Resources */ = {isa = PBXBuildFile; fileRef = 75C42D522476AA7600882D6F /* pic_lock.png */; };
 		B735F807A9A2957F460FF514 /* Pods_QXUIKitExtensionPictureView.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA78B3614F449024EB11E3E4 /* Pods_QXUIKitExtensionPictureView.framework */; };
 /* End PBXBuildFile section */
 
@@ -31,6 +32,7 @@
 		75BB3D71236BC8360065ADE5 /* QXStaticPicturesCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QXStaticPicturesCell.swift; sourceTree = "<group>"; };
 		75BB3D72236BC8360065ADE5 /* QXPictureView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QXPictureView.swift; sourceTree = "<group>"; };
 		75BB3D73236BC8360065ADE5 /* QXStaticPictureCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QXStaticPictureCell.swift; sourceTree = "<group>"; };
+		75C42D522476AA7600882D6F /* pic_lock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pic_lock.png; sourceTree = "<group>"; };
 		CA78B3614F449024EB11E3E4 /* Pods_QXUIKitExtensionPictureView.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_QXUIKitExtensionPictureView.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -77,6 +79,7 @@
 			children = (
 				75BB3D5C236BC74D0065ADE5 /* AppDelegate.swift */,
 				75BB3D60236BC74D0065ADE5 /* ViewController.swift */,
+				75C42D522476AA7600882D6F /* pic_lock.png */,
 				75BB3D70236BC81D0065ADE5 /* QXUIKitExtensionPictureView */,
 				75BB3D62236BC74D0065ADE5 /* Main.storyboard */,
 				75BB3D65236BC74E0065ADE5 /* Assets.xcassets */,
@@ -168,6 +171,7 @@
 				75BB3D69236BC74E0065ADE5 /* LaunchScreen.storyboard in Resources */,
 				75BB3D66236BC74E0065ADE5 /* Assets.xcassets in Resources */,
 				75BB3D64236BC74D0065ADE5 /* Main.storyboard in Resources */,
+				75C42D532476AA7600882D6F /* pic_lock.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

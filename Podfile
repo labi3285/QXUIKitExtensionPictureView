@@ -2,6 +2,12 @@ platform :ios, '8.0'
 
 target 'QXUIKitExtensionPictureView' do
     use_frameworks!
-    pod 'QXUIKitExtension', '~> 0.4.0'
-    pod 'DSImageBrowse', '~> 1.0.2'
+
+    #pod 'QXUIKitExtension', :path => '/Users/admin/Documents/Daily/Github/QXUIKitExtension/QXUIKitExtension'
+
+    pod 'QXUIKitExtension'
+
+    #pod 'QXDSImageBrowse', :path => '/Users/admin/Documents/Daily/Github/QXDSImageBrowse/QXDSImageBrowse/QXDSImageBrowse'
+
+    pod 'QXDSImageBrowse'
 end

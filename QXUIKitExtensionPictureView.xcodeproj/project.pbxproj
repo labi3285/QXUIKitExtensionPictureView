@@ -373,15 +373,17 @@
 			baseConfigurationReference = 2FD34D9EACD2EA5C47428282 /* Pods-QXUIKitExtensionPictureView.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 4S3D2DBDGU;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = R3L4VQN3Q9;
 				INFOPLIST_FILE = QXUIKitExtensionPictureView/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.labi3285.QXUIKitExtensionPictureView;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lakala.ztk;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = ztk_dev;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -392,15 +394,17 @@
 			baseConfigurationReference = 489F1F113A8E4CCECBB3B3B1 /* Pods-QXUIKitExtensionPictureView.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 4S3D2DBDGU;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = R3L4VQN3Q9;
 				INFOPLIST_FILE = QXUIKitExtensionPictureView/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.labi3285.QXUIKitExtensionPictureView;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lakala.ztk;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = ztk_dev;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

@@ -16,7 +16,7 @@ open class QXStaticPicturesCell: QXStaticCell {
     open override func height(_ model: Any?) -> CGFloat? {
         if picturesView.pictures.count == 1 {
             for e in picturesView.pictureViews {
-                e.fixWidth = context.givenWidth - picturesView.padding.left - picturesView.padding.right
+                e.fixWidth = (context?.givenWidth ?? 0) - picturesView.padding.left - picturesView.padding.right
             }
         } else if picturesView.pictures.count == 2 {
             let w = (width - picturesView.padding.left - picturesView.padding.right - picturesView.viewMarginX * 1) / 2

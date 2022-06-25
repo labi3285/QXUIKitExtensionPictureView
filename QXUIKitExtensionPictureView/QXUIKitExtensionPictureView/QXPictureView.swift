@@ -17,14 +17,21 @@ open class QXPictureView: QXImageView {
         get { return image }
     }
     
-    public var handlerPreview: (() -> ())?
+    public var respondPreview: (() -> ())?
+    
+    lazy var touchButton: UIButton = {
+        let e = UIButton()
+        e.addTarget(self, action: #selector(touchButtonClick), for: .touchUpInside)
+        return e
+    }()
 
     public override init() {
         super.init()
         isUserInteractionEnabled = true
         uiImageView.contentMode = .scaleAspectFill
         uiImageView.clipsToBounds = true
-        handlerPreview = { [weak self] in
+        addSubview(touchButton)
+        respondPreview = { [weak self] in
             if let s = self {
                 let item = DSImageScrollItem()
                 item.localImage = s.image?.uiImage
@@ -45,11 +52,19 @@ open class QXPictureView: QXImageView {
             }
         }
     }
+    open override func layoutSubviews() {
+        super.layoutSubviews()
+        touchButton.frame = bounds
+    }
     required public init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    open override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        handlerPreview?()
+//    open override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+//        handlerPreview?()
+//    }
+    
+    @objc func touchButtonClick() {
+        respondPreview?()
     }
 }
 
@@ -78,7 +93,7 @@ open class QXPicturesView: QXArrangeView {
         return (0..<self.maxCount).map { (i) -> QXPictureView in
             let e = QXPictureView()
             e.isDisplay = false
-            e.handlerPreview = { [weak self] in
+            e.respondPreview = { [weak self] in
                 self?.handlePreview(i)
             }
             return e

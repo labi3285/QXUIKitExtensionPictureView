@@ -14,7 +14,7 @@ import QXDSImageBrowse
 open class QXStaticPictureCell: QXStaticCell {
     
     open override func height(_ model: Any?) -> CGFloat? {
-        pictureView.fixWidth = context.givenWidth
+        pictureView.fixWidth = (context?.givenWidth ?? 0)
         return pictureView.natureSize.h
     }
 
